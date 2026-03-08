@@ -7,22 +7,27 @@
       </div>
     </div>
 
-    <!-- 필터 영역 추가 -->
-    <div class="p-4 bg-slate-50 rounded-xl border border-dashed border-border flex flex-wrap gap-4">
-      <div class="flex-1 min-w-[150px]">
-        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">대분류</label>
+    <!-- 필터 및 정렬 영역 -->
+    <div class="p-4 bg-slate-50 rounded-xl border border-dashed border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="space-y-1">
+        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">대분류</label>
         <select id="solve-filter-major" onchange="onSolveMajorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
           <option value="">전체 대분류</option>
         </select>
       </div>
-      <div class="flex-1 min-w-[150px]">
-        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">소분류</label>
+      <div class="space-y-1">
+        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">소분류</label>
         <select id="solve-filter-minor" onchange="onSolveMinorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
           <option value="">전체 소분류</option>
         </select>
       </div>
-      <div class="flex items-end">
-        <button onclick="initSolvePage(true)" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-black transition-colors">적용</button>
+      <div class="space-y-1">
+        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">정렬 기준</label>
+        <select id="solve-sort-order" onchange="initSolvePage(false)" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+          <option value="oldest">오래된순</option>
+          <option value="newest">최근순</option>
+          <option value="accuracy">정답률 저조순</option>
+        </select>
       </div>
     </div>
 
@@ -84,70 +89,73 @@
    */
   var solveQuestions = [];
   var currentSolveIndex = 0;
-  var allSolveReference = []; // 필터링용 전체 데이터 참조 (최초 로드 시)
+  var allSolveReference = []; // 필터링용 전체 데이터 참조 (v56 글로벌 데이터 연동)
 
   function initSolvePage(forceRefresh) {
     var majorFilter = document.getElementById('solve-filter-major');
     var minorFilter = document.getElementById('solve-filter-minor');
+    var sortSelect = document.getElementById('solve-sort-order');
     var major_val = majorFilter ? majorFilter.value : '';
     var minor_val = minorFilter ? minorFilter.value : '';
-    var payload = {
-      major_subject: major_val,
-      minor_subject: minor_val
-    };
+    var sort_val = sortSelect ? sortSelect.value : 'oldest';
 
-    // 강제 새로고침 시 클라이언트 메모리 초기화
-    if (forceRefresh) {
-      solveQuestions = [];
-    }
-    // 메모리 캐시 확인 (필터가 적용 안 된 전체 목록일 때 최초 1회 로드 후 유지)
-    if (!forceRefresh && solveQuestions.length > 0 && !payload.major_subject && !payload.minor_subject) {
-      console.log('Using memory cache for Solve Page');
-      updateSolveFilterOptions(); // DOM 교체 후 필터 목록 재구성 필수
-      currentSolveIndex = 0;
-      renderCurrentQuestion();
+    console.log('[DEBUG] Solve Page Init - payload:', {major: major_val, minor: minor_val, sort: sort_val});
+
+    // 글로벌 데이터 확인 및 연동
+    if (typeof allQuestions === 'undefined' || allQuestions.length === 0) {
+      console.warn('[DEBUG] Global data not found. Fetching...');
+      loadGlobalData(function() { initSolvePage(false); });
       return;
     }
 
-    solveQuestions = [];
-    currentSolveIndex = 0;
-
-    var displayArea = document.getElementById('question-display-area');
-    if (displayArea) {
-      displayArea.innerHTML = [
-        '<div class="flex flex-col items-center justify-center py-20 space-y-4">',
-          '<div class="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>',
-          '<p class="text-sm text-muted">문제를 구성하는 중입니다...</p>',
-        '</div>'
-      ].join('');
+    // 1. 글로벌 데이터에서 필터링
+    var filtered = allQuestions.slice(); // 복사본 사용
+    if (major_val) {
+      filtered = filtered.filter(function(q) { return q.major_subject === major_val; });
+    }
+    if (minor_val) {
+      filtered = filtered.filter(function(q) { return q.minor_subject === minor_val; });
     }
 
-    google.script.run
-      .withSuccessHandler(function(response) {
-        // 라우터를 거치므로 response.status는 통신 성공 여부, response.data는 실제 컨트롤러의 응답
-        if (response && response.status === 'success' && response.data && response.data.status === 'success') {
-          var actualData = response.data.data;
-          if (actualData && actualData.length > 0) {
-            solveQuestions = actualData;
-            // 필터 초기화가 안 되어 있다면 (최초 진입 시) 전체 목록 기반으로 필터 생성
-            if (allSolveReference.length === 0) {
-              allSolveReference = actualData;
-              updateSolveFilterOptions();
-            }
-            renderCurrentQuestion();
-          } else {
-            showSolveError('조건에 맞는 문제가 없습니다. 필터를 변경해 보세요.');
-          }
-        } else {
-          var msg = (response && response.data && response.data.message) || (response && response.message) || '데이터 로드 중 오류가 발생했습니다.';
-          showSolveError(msg);
-        }
-      })
-      .withFailureHandler(function(error) {
-        showSolveError('서버 통신 오류가 발생했습니다.');
-        console.error(error);
-      })
-      .router({ action: 'getQuestionsForSolve', payload: payload });
+    // 2. 정렬 로직 적용 (v66)
+    filtered.sort(function(a, b) {
+      if (sort_val === 'newest') {
+        return new Date(b.created_at) - new Date(a.created_at);
+      } else if (sort_val === 'accuracy') {
+        var rateA = (a.correct_rate !== undefined && a.correct_rate !== null) ? a.correct_rate : 100;
+        var rateB = (b.correct_rate !== undefined && b.correct_rate !== null) ? b.correct_rate : 100;
+        return rateA - rateB; // 정답률 낮은 순
+      } else { // oldest (기본값)
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
+    });
+
+    solveQuestions = filtered;
+    currentSolveIndex = 0;
+
+    // 3. 필터 참조 데이터 및 UI 업데이트
+    allSolveReference = allQuestions; 
+    
+    // 필터 옵션 초기화 (최초 1회 또는 강제 갱신 시)
+    if (forceRefresh || (majorFilter && majorFilter.options.length <= 1)) {
+        updateSolveFilterOptions();
+    }
+
+    // 4. 즉시 렌더링
+    console.log('[DEBUG] Solve Page: Items loaded with sort (' + sort_val + '):', solveQuestions.length);
+    
+    if (solveQuestions.length > 0) {
+      renderCurrentQuestion();
+    } else {
+      var displayArea = document.getElementById('question-display-area');
+      if (displayArea) {
+        displayArea.innerHTML = '<div class="text-center py-20 text-muted">조건에 맞는 문제가 없습니다. 필터를 변경해 보세요.</div>';
+      }
+      var progressText = document.getElementById('solve-progress');
+      if (progressText) progressText.innerText = '0 / 0';
+      var inputArea = document.getElementById('answer-input-area');
+      if (inputArea) inputArea.innerHTML = '';
+    }
   }
 
   function updateSolveFilterOptions() {
@@ -176,20 +184,32 @@
     var minorSelect = document.getElementById('solve-filter-minor');
     var minor = minorSelect.value;
     
-    if (minor && allSolveReference.length > 0) {
-      var matched = allSolveReference.find(function(q) { return q.minor_subject === minor; });
+    var referenceData = (typeof allQuestions !== 'undefined' && allQuestions.length > 0) ? allQuestions : allSolveReference;
+
+    if (minor && referenceData.length > 0) {
+      var matched = referenceData.find(function(q) { return q.minor_subject === minor; });
       if (matched && majorSelect.value !== matched.major_subject) {
         majorSelect.value = matched.major_subject;
-        onSolveMajorChange(); // 대분류 변경에 따른 소분류 리스트 재구성
-        minorSelect.value = minor; // 소분류 값 유지
+        // v64/v66: 대분류 변경 시 소분류 리스트 재구성만 하고, 값은 유지
+        onSolveMajorChangeInternal(); 
+        minorSelect.value = minor; 
       }
     }
+    initSolvePage(false); // v66: 변경 즉시 갱신
   }
 
   function onSolveMajorChange() {
+    onSolveMajorChangeInternal();
+    initSolvePage(false); // v66: 변경 즉시 갱신
+  }
+
+  function onSolveMajorChangeInternal() {
     var majorSelect = document.getElementById('solve-filter-major');
     var minorSelect = document.getElementById('solve-filter-minor');
     if (!majorSelect || !minorSelect) return;
+
+    // v64: 대분류 변경 시 소분류를 '전체'("")로 초기화
+    minorSelect.value = "";
 
     var selectedMajor = majorSelect.value;
     var currentMinor = minorSelect.value;
@@ -225,6 +245,7 @@
     // UI 상태 초기화
     resultArea.classList.add('hidden');
     submitBtn.classList.remove('hidden');
+    submitBtn.disabled = false;
     nextBtn.classList.add('hidden');
     progressText.innerText = (currentSolveIndex + 1) + ' / ' + solveQuestions.length;
 
@@ -322,27 +343,38 @@
 
     var btn = document.getElementById('submit-answer-btn');
     btn.disabled = true;
-    btn.innerText = '채점 중...';
+    
+    // 1. 클라이언트 측 즉시 채점 (반응성 강화)
+    var isCorrect = false;
+    if (Array.isArray(q.answer)) {
+      var u = (userAnswer || []).map(function(s){ return String(s).trim(); });
+      var c = q.answer.map(function(s){ return String(s).trim(); });
+      isCorrect = (u.length === c.length && u.every(function(v, i){ return v === c[i]; }));
+      if (!isCorrect && u.length === 1) isCorrect = c.some(function(v){ return v === u[0]; });
+    } else {
+      isCorrect = (String(userAnswer).trim() === String(q.answer).trim());
+    }
 
+    // UI 즉시 반영
+    showSolveResult(isCorrect, q);
+
+    // 2. 서버에는 백그라운드로 이력 저장 (비동기 처리 느낌)
     google.script.run
       .withSuccessHandler(function(response) {
-        btn.disabled = false;
-        btn.innerText = '정답 제출';
-        if (response && response.status === 'success' && response.data && response.data.status === 'success') {
-          showSolveResult(response.data.is_correct, q);
+        console.log('[DEBUG] Server record saved:', response);
+        if (response && response.status === 'success') {
+            isGlobalDataDirty = true; // 정답 제출 성공 시 분석 데이터 최신화 필요 마킹 (v58)
         } else {
-          var msg = (response && response.data && response.data.message) || (response && response.message) || '알 수 없는 오류';
-          alert('채점 처리 중 오류가 발생했습니다: ' + msg);
+            console.error('이력 저장 중 오류 발생:', (response ? response.message : '알 수 없는 오류'));
         }
-      })
-      .withFailureHandler(function(error) {
-        btn.disabled = false;
-        btn.innerText = '정답 제출';
-        alert('서버 통신 오류');
       })
       .router({ 
         action: 'submitAnswer', 
-        payload: { question_id: q.id, user_answer: userAnswer } 
+        payload: { 
+          question_id: q.id, 
+          user_answer: userAnswer,
+          is_correct: isCorrect // 이미 채점된 결과 전달로 서버 부하 감소
+        } 
       });
   }
 

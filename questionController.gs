@@ -129,48 +129,69 @@ function createQuestion(payload) {
 
 /**
  * 분석 데이터를 포함한 문제 목록 조회
+ * @param {boolean} sync - true일 경우 전체 통계를 재계산하여 DB를 최신화함 (v58)
  */
-function getQuestionsWithAnalytics() {
+function getQuestionsWithAnalytics(sync = false) {
   try {
-    // 1. 모든 문제 조회
-    const questionsResponse = supabaseFetch('/rest/v1/questions?select=*&order=created_at.desc', 'GET');
-    if (!questionsResponse.success) throw new Error('문제 조회 실패: ' + questionsResponse.error);
-    const questions = questionsResponse.data;
+    // 0. 상세 동기화가 필요한 경우 실행 (분석 페이지 진입 시)
+    if (sync === true) {
+      syncAllStats();
+    }
 
-    // 2. 풀이 통계 조회 (정답률, 최종 풀이 시간)
-    // rpc를 사용하거나 history 테이블을 직접 집계하는 대신, 
-    // analyticsController.gs의 로직을 활용하거나 직접 history를 가져와 GAS에서 가공
-    const historyResponse = supabaseFetch('/rest/v1/learning_history?select=question_id,is_correct,created_at', 'GET');
-    if (!historyResponse.success) throw new Error('이력 조회 실패: ' + historyResponse.error);
-    const history = historyResponse.data;
+    // 1. 필요한 모든 컬럼을 단일 쿼리로 조회
+    const endpoint = `/rest/v1/questions?select=*&order=created_at.desc`;
+    const response = supabaseFetch(endpoint, 'GET');
+    if (!response.success) throw new Error('데이터 조회 실패: ' + response.error);
 
-    const statsMap = {};
-    history.forEach(h => {
-      if (!statsMap[h.question_id]) {
-        statsMap[h.question_id] = { total: 0, correct: 0, last_solved: h.created_at };
-      }
-      statsMap[h.question_id].total++;
-      if (h.is_correct) statsMap[h.question_id].correct++;
-      if (new Date(h.created_at) > new Date(statsMap[h.question_id].last_solved)) {
-        statsMap[h.question_id].last_solved = h.created_at;
-      }
-    });
-
-    // 3. 데이터 병합
-    const result = questions.map(q => {
-      const stats = statsMap[q.id] || { total: 0, correct: 0, last_solved: null };
-      return {
-        ...q,
-        total_attempts: stats.total,
-        accuracy_rate: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
-        last_solved_at: stats.last_solved
-      };
-    });
-
-    return { status: 'success', data: result };
+    return { 
+      status: 'success', 
+      data: response.data 
+    };
   } catch (error) {
     if (typeof sheetLogger !== 'undefined') sheetLogger.error('getQuestionsWithAnalytics', error.message, error.stack);
     return { status: 'error', message: error.message };
+  }
+}
+
+/**
+ * 모든 문제의 풀이 이력을 기반으로 통계(정답률 등)를 일괄 업데이트 (v58)
+ */
+function syncAllStats() {
+  try {
+    Logger.log('[DEBUG] syncAllStats Start');
+    
+    // 1. 모든 풀이 이력 가져오기
+    const hResp = supabaseFetch('/rest/v1/learning_history?select=question_id,is_correct', 'GET');
+    if (!hResp.success) return;
+    
+    const history = hResp.data;
+    const statsMap = {};
+    
+    history.forEach(h => {
+      if (!statsMap[h.question_id]) statsMap[h.question_id] = { total: 0, correct: 0 };
+      statsMap[h.question_id].total++;
+      if (h.is_correct) statsMap[h.question_id].correct++;
+    });
+    
+    // 2. 각 문제별로 통계 업데이트 (성능을 위해 개별 PATCH 수행 - 추후 RPC 고려 가능)
+    // 현재는 문항 수가 아주 많지 않으므로 반복문으로 처리
+    for (const qId in statsMap) {
+      const s = statsMap[qId];
+      const accuracy = Math.round((s.correct / s.total) * 100);
+      
+      const payload = {
+        total_attempts: s.total,
+        correct_attempts: s.correct,
+        accuracy_rate: accuracy
+      };
+      
+      supabaseFetch(`/rest/v1/questions?id=eq.${qId}`, 'PATCH', payload);
+    }
+    
+    Logger.log('[DEBUG] syncAllStats Completed');
+    clearSupabaseCache();
+  } catch (e) {
+    Logger.log('[ERROR] syncAllStats Error: ' + e.message);
   }
 }
 

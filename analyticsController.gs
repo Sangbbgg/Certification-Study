@@ -4,40 +4,28 @@
  */
 function submitAnswer(payload) {
   try {
-    const { question_id, user_answer } = payload;
+    const { question_id, user_answer, is_correct: client_is_correct } = payload;
     
     if (!question_id || user_answer === undefined) {
       throw new Error("문제 ID와 제출한 답안이 필요합니다.");
     }
-    
-    // 1. 문제 정보에서 정답 확인
-    const questionEndpoint = `/rest/v1/questions?id=eq.${encodeURIComponent(question_id)}&select=answer`;
-    const questionsResponse = supabaseFetch(questionEndpoint, 'GET');
-    
-    if (!questionsResponse.success || !questionsResponse.data || questionsResponse.data.length === 0) {
-      throw new Error("요청하신 문제를 DB에서 찾을 수 없습니다.");
+
+    // 1. 이미 클라이언트에서 채점된 값을 사용하거나, 서버에서 다시 검증
+    let is_correct = client_is_correct;
+    if (is_correct === undefined) {
+        // 클라이언트에서 결과를 안 주면 서버에서 직접 확인 (하위 호환)
+        const qResp = supabaseFetch(`/rest/v1/questions?id=eq.${question_id}&select=answer`, 'GET');
+        const correctAnswer = qResp.data[0].answer;
+        if (Array.isArray(correctAnswer)) {
+          const u = (user_answer || []).map(s => String(s).trim());
+          const c = correctAnswer.map(s => String(s).trim());
+          is_correct = (u.length === c.length && u.every((v, i) => v === c[i]));
+        } else {
+          is_correct = (String(user_answer).trim() === String(correctAnswer).trim());
+        }
     }
     
-    const correctAnswer = questionsResponse.data[0].answer;
-    
-    // 2. 답안 채점 (유형별 고도화)
-    let is_correct = false;
-    
-    if (Array.isArray(correctAnswer)) {
-      // 1:1 순서 및 값 비교 (객관식, 찾아넣기)
-      const u = (user_answer || []).map(s => String(s).trim());
-      const c = correctAnswer.map(s => String(s).trim());
-      is_correct = (u.length === c.length && u.every((v, i) => v === c[i]));
-      
-      // 단답형의 경우 (제출값이 하나인 경우 배열 내 존재 여부로 교차 검증 - 선택)
-      if (!is_correct && u.length === 1) {
-        is_correct = c.some(v => v === u[0]);
-      }
-    } else {
-      is_correct = (String(user_answer).trim() === String(correctAnswer).trim());
-    }
-    
-    // 3. 풀이 이력 DB에 저장
+    // 2. 풀이 이력 DB에 저장
     const historyObj = {
       question_id: question_id,
       user_answer: user_answer,
@@ -51,25 +39,15 @@ function submitAnswer(payload) {
       throw new Error("풀이 이력 저장에 실패했습니다: " + response.error);
     }
 
-    // 통계 데이터 최신화를 위해 서버 캐시 무효화
-    clearSupabaseCache();
-    Logger.log('[SUCCESS] Answer submitted and cache invalidated. is_correct: ' + is_correct);
+    // 3. 문항 테이블(questions)의 통계 컬럼 업데이트 생략 (v58 지연 업데이트 아키텍처)
+    // 분석 페이지 진입 시 syncAllStats()를 통해 일괄 업데이트될 예정입니다.
     
-    return {
-      status: 'success',
-      is_correct: is_correct,
-      data: response.data
-    };
+    clearSupabaseCache();
+    return { status: 'success', is_correct: is_correct, data: response.data };
     
   } catch (error) {
     Logger.log('[CRITICAL] submitAnswer Error: ' + error.message);
-    if (typeof sheetLogger !== 'undefined') {
-      sheetLogger.error('submitAnswer', error.message, error.stack);
-    }
-    return {
-      status: 'error',
-      message: error.message
-    };
+    return { status: 'error', message: error.message };
   }
 }
 

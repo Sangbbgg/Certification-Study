@@ -2,9 +2,10 @@
   /**
    * 전역 상태 및 라우팅 로직 (Core)
    */
-  let allQuestions = [];
-  let currentDetailQuestion = null;
-  let isEditMode = false;
+  var allQuestions = []; // 전체 문제 데이터 (v53)
+  var isGlobalDataDirty = false; // 데이터 최신화 필요 여부 (v58)
+  var currentDetailQuestion = null;
+  var isEditMode = false;
 
   const pages = {
     solve: `
@@ -81,8 +82,38 @@
     });
   }
 
+  /**
+   * 글로벌 데이터 로드 (v53/v58)
+   * 앱 실행 시 1회만 호출하여 전체 데이터를 메모리에 저장
+   * @param {function} callback - 로드 완료 후 실행할 콜백
+   * @param {boolean} forceSync - true일 경우 서버에서 통계를 재계산함
+   */
+  function loadGlobalData(callback, forceSync = false) {
+    console.log('[DEBUG] Loading global data (Sync=' + forceSync + ')...');
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response && response.status === 'success') {
+          allQuestions = response.data || [];
+          isGlobalDataDirty = false; // 로드 성공 시 Dirty 상태 해제
+          console.log('[DEBUG] Global Data Loaded:', allQuestions.length, 'items');
+          if (callback) callback(allQuestions);
+        } else {
+          console.error('글로벌 데이터 로드 실패');
+          if (callback) callback([]);
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('서버 통신 오류:', error);
+        if (callback) callback([]);
+      })
+      .getQuestionsWithAnalytics(forceSync);
+  }
+
   // 초기화
   document.addEventListener('DOMContentLoaded', () => {
-    navigate('write');
+    loadGlobalData(() => {
+      // 데이터 로드 완료 후 첫 페이지로 이동
+      navigate('write');
+    });
   });
 </script>
