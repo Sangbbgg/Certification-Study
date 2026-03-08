@@ -1,26 +1,19 @@
 <script>
-  // 메뉴별 메인 영역 템플릿(Placeholder)
-  // 장시간 학습에도 눈이 피로하지 않도록 차분한 색상(slate/muted 계열 등) 활용
+  /**
+   * 전역 상태 및 라우팅 로직 (Core)
+   */
+  let allQuestions = [];
+  let currentDetailQuestion = null;
+  let isEditMode = false;
+
   const pages = {
-    // write는 template 태그(page-write-template)에 의해 대체됩니다.
-    analyze: `
-      <div class="fade-in space-y-6">
-        <h2 class="text-2xl font-bold tracking-tight text-primary">문제관리 & 분석</h2>
-        <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
-          <p class="text-sm font-semibold text-secondary mb-3 border-b border-border pb-2">취약점 분석</p>
-          <div class="bg-bg p-8 rounded-lg border border-dashed border-border flex items-center justify-center min-h-[200px]">
-            <p class="text-sm text-muted text-center">이곳에 문제 통계 및 분석 정보가 들어갑니다.</p>
-          </div>
-        </div>
-      </div>
-    `,
     solve: `
       <div class="fade-in space-y-6">
         <h2 class="text-2xl font-bold tracking-tight text-primary">문제풀이</h2>
         <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
           <p class="text-sm font-semibold text-secondary mb-3 border-b border-border pb-2">연습 모드</p>
           <div class="bg-bg p-8 rounded-lg border border-dashed border-border flex items-center justify-center min-h-[200px]">
-            <p class="text-sm text-muted text-center">이곳에 문제풀이 화면(개별 문제 풀이, 정답/해설 즉시 확인 등)이 들어갑니다.</p>
+            <p class="text-sm text-muted text-center">이곳에 문제풀이 화면이 들어갑니다.</p>
           </div>
         </div>
       </div>
@@ -31,7 +24,7 @@
         <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
           <p class="text-sm font-semibold text-secondary mb-3 border-b border-border pb-2">실전 테스트</p>
           <div class="bg-bg p-8 rounded-lg border border-dashed border-border flex items-center justify-center min-h-[200px]">
-            <p class="text-sm text-muted text-center">이곳에 모의시험 인터페이스(문제 제공, 타이머, 제출 버튼 등)가 들어갑니다.</p>
+            <p class="text-sm text-muted text-center">이곳에 모의시험 인터페이스가 들어갑니다.</p>
           </div>
         </div>
       </div>
@@ -39,740 +32,46 @@
   };
 
   function navigate(pageId) {
-    // 메인 컨테이너 내용 교체
     const mainContainer = document.getElementById('main-container');
-    
-    // 템플릿 태그가 있는지 확인 (예: page-write-template)
     const templateId = 'page-' + pageId + '-template';
     const templateElement = document.getElementById(templateId);
     
     if (templateElement) {
       mainContainer.innerHTML = templateElement.innerHTML;
-      
-      // 페이지별 초기화 로직
       if (pageId === 'analyze') {
-        loadManageList();
+        if (typeof loadManageList === 'function') loadManageList();
       } else if (pageId === 'write') {
-        resetQuestionForm();
+        if (typeof resetQuestionForm === 'function') resetQuestionForm();
+      } else if (pageId === 'solve') {
+        if (typeof initSolvePage === 'function') initSolvePage();
       }
     } else {
       mainContainer.innerHTML = pages[pageId] || '<p class="text-center text-muted my-10">해당 페이지를 찾을 수 없습니다.</p>';
     }
 
-    // 탭 선택/해제 상태 업데이트
+    // 탭 UI 업데이트
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(tab => {
-      // 초기화 상태
       tab.classList.remove('text-primary', 'font-bold', 'fold:bg-slate-100');
       tab.classList.add('text-muted', 'hover:text-primary', 'fold:hover:bg-slate-50');
-      
-      // 활성화 상태
       if (tab.id === 'tab-' + pageId) {
         tab.classList.remove('text-muted', 'hover:text-primary', 'fold:hover:bg-slate-50');
         tab.classList.add('text-primary', 'font-bold', 'fold:bg-slate-100');
       }
     });
 
-    // 화면 최상단으로 스크롤 이동
     document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // --- 문제관리 & 분석 관련 전역 상태 ---
-  let allQuestions = [];
-  let currentDetailQuestion = null;
-  let isEditMode = false;
-
   /**
-   * 문제 목록 테이블 렌더링
+   * 전역 유틸리티 함수
    */
-  function renderManageList(questions) {
-    const listBody = document.getElementById('manage-list-body');
-    if (!listBody) return;
-    
-    if (questions.length === 0) {
-      listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">등록된 문제가 없습니다.</td></tr>';
-      return;
-    }
-    
-    listBody.innerHTML = questions.map(q => `
-      <tr class="hover:bg-slate-50 transition-colors cursor-pointer group" onclick="viewQuestionDetail('${q.id}')">
-        <td class="px-4 py-4">
-          <div class="font-medium text-primary group-hover:text-accent transition-colors truncate max-w-[200px] md:max-w-md">${q.question_title}</div>
-          <div class="text-xs text-muted">${q.major_subject} > ${q.minor_subject}</div>
-        </td>
-        <td class="px-4 py-4 text-center text-xs text-secondary whitespace-nowrap">${formatDate(q.last_solved_at)}</td>
-        <td class="px-4 py-4 text-center">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${q.accuracy_rate >= 80 ? 'bg-green-100 text-green-800' : q.accuracy_rate >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
-            ${q.accuracy_rate}%
-          </span>
-        </td>
-        <td class="px-4 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
-          <button onclick="viewQuestionDetail('${q.id}')" class="text-secondary hover:text-accent p-1 mr-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-          <button onclick="deleteQuestion('${q.id}')" class="text-red-300 hover:text-red-500 p-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-        </td>
-      </tr>
-    `).join('');
-  }
-
-  /**
-   * 문제 목록을 서버로부터 로드합니다.
-   */
-  function loadManageList() {
-    const listBody = document.getElementById('manage-list-body');
-    if (!listBody) return;
-    
-    listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 불러오는 중...</td></tr>';
-    
-    google.script.run
-      .withSuccessHandler((response) => {
-        if (response && response.status === 'success') {
-          allQuestions = response.data;
-          updateFilterOptions(allQuestions);
-          renderManageList(allQuestions);
-        } else {
-          listBody.innerHTML = `<tr><td colspan="4" class="px-4 py-10 text-center text-red-400">조회 실패: ${response ? response.message : '알 수 없는 오류'}</td></tr>`;
-        }
-      })
-      .withFailureHandler((error) => {
-        console.error(error);
-        listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-red-500">서버 통신 오류가 발생했습니다.</td></tr>';
-      })
-      .getQuestionsWithAnalytics();
-  }
-
-  /**
-   * 필터 옵션을 동적으로 업데이트합니다.
-   */
-  function updateFilterOptions(data, selectedMajor = "") {
-    const majorSelect = document.getElementById('filter-major');
-    const minorSelect = document.getElementById('filter-minor');
-    if (!majorSelect || !minorSelect) return;
-
-    // 대분류 옵션 추출 (한 번만 수행하거나 초기 로드 시만)
-    if (majorSelect.options.length <= 1) {
-      const majors = [...new Set(data.map(q => q.major_subject))].sort();
-      majorSelect.innerHTML = '<option value="">전체 대분류</option>' + 
-        majors.map(m => `<option value="${m}">${m}</option>`).join('');
-    }
-
-    // 소분류 옵션 추출 (선택된 대분류에 따라 다름)
-    let filteredData = data;
-    if (selectedMajor) {
-      filteredData = data.filter(q => q.major_subject === selectedMajor);
-    }
-    const minors = [...new Set(filteredData.map(q => q.minor_subject))].sort();
-
-    const currentMinor = minorSelect.value;
-    minorSelect.innerHTML = '<option value="">전체 소분류</option>' + 
-      minors.map(m => `<option value="${m}" ${m === currentMinor ? 'selected' : ''}>${m}</option>`).join('');
-  }
-
-  /**
-   * 필터를 적용하여 리스트를 다시 렌더링합니다.
-   */
-  function applyFilters() {
-    const majorSelect = document.getElementById('filter-major');
-    const minorSelect = document.getElementById('filter-minor');
-    const major = majorSelect.value;
-    const minor = minorSelect.value;
-
-    // 대분류가 바뀌었을 때 소분류 옵션 재구성 (순서 주의: 값을 가져온 후 재구성)
-    // 단, 소분류 필터링 중일 때는 재구성을 하면 값이 날아갈 수 있으므로 
-    // 이벤트 소스가 major일 때만 재구성하는 것이 깔끔하지만 간단한 구현을 위해 
-    // 필터링 적용 시마다 소분류 목록을 해당 대분류에 맞게 갱신합니다.
-    updateFilterOptions(allQuestions, major);
-
-    let filtered = allQuestions;
-    if (major) filtered = filtered.filter(q => q.major_subject === major);
-    if (minor) filtered = filtered.filter(q => q.minor_subject === minor);
-
-    renderManageList(filtered);
-  }
-
-  /**
-   * 문제 상세 보기
-   */
-  function viewQuestionDetail(questionId) {
-    const question = allQuestions.find(q => q.id === questionId);
-    if (!question) return;
-    
-    currentDetailQuestion = question;
-    isEditMode = false;
-    
-    const listArea = document.getElementById('manage-list-area');
-    const detailArea = document.getElementById('manage-detail-area');
-    if(listArea) listArea.style.display = 'none';
-    if(detailArea) detailArea.style.display = 'block';
-    
-    renderDetailContent(question, false);
-    updateEditToggleUI(false);
-  }
-
-  function backToList() {
-    const listArea = document.getElementById('manage-list-area');
-    const detailArea = document.getElementById('manage-detail-area');
-    if(listArea) listArea.style.display = 'block';
-    if(detailArea) detailArea.style.display = 'none';
-    currentDetailQuestion = null;
-  }
-
-  function toggleEditMode() {
-    isEditMode = !isEditMode;
-    updateEditToggleUI(isEditMode);
-    renderDetailContent(currentDetailQuestion, isEditMode);
-  }
-
-  function updateEditToggleUI(isEnabled) {
-    const slider = document.getElementById('edit-toggle-slider');
-    const toggle = document.getElementById('edit-toggle');
-    const actions = document.getElementById('edit-actions');
-    
-    if (slider && toggle && actions) {
-      if (isEnabled) {
-        slider.classList.replace('translate-x-0', 'translate-x-5');
-        toggle.classList.replace('bg-slate-200', 'bg-accent');
-        actions.style.display = 'flex';
-      } else {
-        slider.classList.replace('translate-x-5', 'translate-x-0');
-        toggle.classList.replace('bg-accent', 'bg-slate-200');
-        actions.style.display = 'none';
-      }
-    }
-  }
-
-  function renderDetailContent(q, isEdit) {
-    const wrapper = document.getElementById('detail-content-wrapper');
-    if (!wrapper) return;
-    
-    // 지문 및 힌트 렌더링 준비
-    let contentToRender = q.content || '';
-    contentToRender = contentToRender.replace(/'''/g, '```');
-
-    if (isEdit) {
-      // 수정 모드: 복잡한 로직을 변수로 추출하여 템플릿 에러 방지
-      let editImageUrl = q.image_url || '';
-      if (editImageUrl.includes('google')) {
-        const idMatch = editImageUrl.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{25,})/);
-        if (idMatch) editImageUrl = 'https://lh3.googleusercontent.com/d/' + idMatch[1];
-      }
-
-      let imagePreviewHtml = '';
-      if (q.image_url) {
-        imagePreviewHtml = `
-          <div class="relative inline-block group">
-            <img src="${editImageUrl}" class="max-h-64 h-auto w-auto rounded-lg border border-border shadow-md">
-            <button type="button" onclick="removeImageFromQuestion()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <p class="text-[10px] text-muted mt-1">현재 등록된 이미지</p>
-          </div>
-        `;
-      } else {
-        imagePreviewHtml = '<p class="text-xs text-muted">등록된 이미지가 없습니다.</p>';
-      }
-
-      wrapper.innerHTML = `
-        <input type="hidden" id="remove-image-flag" name="remove_image" value="false">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="block text-xs font-medium text-muted mb-1">대과목</label>
-               <input type="text" name="major_subject" value="${q.major_subject}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
-          <div><label class="block text-xs font-medium text-muted mb-1">소과목</label>
-               <input type="text" name="minor_subject" value="${q.minor_subject}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
-        </div>
-        <div><label class="block text-xs font-medium text-muted mb-1">문제명</label>
-             <input type="text" name="question_title" value="${q.question_title}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
-        <div>
-          <label class="block text-xs font-medium text-muted mb-1">지문 (마크다운)</label>
-          <textarea id="edit-content" name="content" rows="8" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none font-mono">${q.content}</textarea>
-        </div>
-        
-        <div id="image-edit-section" class="space-y-3 p-4 bg-slate-50 rounded-xl border border-dashed border-border">
-          <label class="block text-xs font-bold text-primary uppercase tracking-tight">이미지 관리</label>
-          <div id="current-image-preview">${imagePreviewHtml}</div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-[10px] font-medium text-muted mb-1">이미지 위치</label>
-              <select name="image_position" class="w-full px-3 py-1.5 border border-border rounded-lg text-sm bg-white outline-none">
-                <option value="TOP" ${q.image_position === 'TOP' ? 'selected' : ''}>지문 위 (TOP)</option>
-                <option value="BOTTOM" ${q.image_position !== 'TOP' ? 'selected' : ''}>지문 아래 (BOTTOM)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[10px] font-medium text-muted mb-1">새 이미지 업로드</label>
-              <input type="file" name="imageFile" accept="image/*" class="w-full text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-slate-200 file:text-primary hover:file:bg-slate-300">
-            </div>
-          </div>
-        </div>
-
-        <!-- 정답 및 보기 편집 영역 추가 -->
-        <div id="options-edit-section" class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 mt-4">
-          <label class="block text-xs font-bold text-blue-600 uppercase mb-3">정답 및 보기 설정</label>
-          ${q.question_type === 'MULTIPLE_CHOICE' ? `
-            <div class="space-y-3">
-              <p class="text-[10px] text-blue-400 font-medium mb-1">보기 항목 수정 (정답인 항목을 선택하세요)</p>
-              <div id="edit-options-list" class="space-y-2">
-                ${(q.options || []).map((opt, idx) => `
-                  <div class="flex items-center gap-2">
-                    <input type="radio" name="edit_correct_answer" value="${idx}" ${String(idx) === String(q.answer) ? 'checked' : ''} class="w-4 h-4 text-accent">
-                    <input type="text" name="edit_option_text" value="${opt}" class="flex-1 px-3 py-1.5 border border-border rounded-lg text-sm bg-white outline-none">
-                    <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 px-1">✕</button>
-                  </div>
-                `).join('')}
-              </div>
-              <button type="button" onclick="addOptionToEdit()" class="mt-2 text-xs text-accent font-bold">+ 보기 추가</button>
-            </div>
-          ` : `
-            <div>
-              <label class="block text-[10px] text-blue-400 font-medium mb-1">정답 입력</label>
-              <textarea name="edit_answer_text" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white outline-none font-mono">${q.answer || ''}</textarea>
-            </div>
-          `}
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-muted mb-1">해설 (마크다운)</label>
-          <textarea name="hint_explanation" rows="4" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none font-mono">${q.hint_explanation || ''}</textarea>
-        </div>
-      `;
-      document.getElementById('edit-id').value = q.id;
-    } else {
-      // 조회 모드 HTML (Markdown 렌더링 적용)
-      let renderedContent = contentToRender;
-      let renderedHint = q.hint_explanation || '해설이 없습니다.';
-      let imageHtml = '';
-
-      // [DEBUG] 렌더링 데이터 확인
-      console.log(`[DEBUG] Rendering Detail - ID: ${q.id}, Position: ${q.image_position}, HasImage: ${!!q.image_url}`);
-
-      if (q.image_url) {
-        let finalImageUrl = q.image_url;
-        const match = q.image_url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{25,})/);
-        if (match && q.image_url.includes('google')) {
-          finalImageUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
-        }
-        imageHtml = `<div class="flex justify-center my-4"><img src="${finalImageUrl}" class="rounded-xl border border-border shadow-lg max-w-full h-auto"></div>`;
-      }
-
-      if (typeof marked !== 'undefined') {
-        try {
-          const renderer = new marked.Renderer();
-          renderer.image = function(arg) {
-            let href = typeof arg === 'object' ? arg.href : arg;
-            if (typeof href !== 'string') return '';
-            const match = href.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{25,})/);
-            if (match && href.includes('google')) href = `https://lh3.googleusercontent.com/d/${match[1]}`;
-            return `<img src="${href}" class="rounded-xl border border-border shadow-sm my-4 mx-auto block max-w-full h-auto">`;
-          };
-          
-          // 지문 원본에서 이미지 태그가 남아있다면 제거 (중복 출력 방지)
-          const cleanText = contentToRender.replace(/!\[.*?\]\(.*?\)/g, "").trim();
-          
-          const processedContent = cleanText
-            .replace(/([^\n])(```)/g, '$1\n$2')
-            .replace(/(```)([^\n])/g, '$1\n$2');
-
-          renderedContent = marked.parse(processedContent, { renderer });
-          renderedHint = marked.parse(renderedHint.replace(/'''/g, '```'), { renderer });
-        } catch (e) {
-          console.error('[ERROR] Markdown parsing error:', e);
-          renderedContent = `Check Markdown: ${e.message}<br><pre>${contentToRender}</pre>`;
-        }
-      }
-      
-      wrapper.innerHTML = `
-        <div class="flex flex-wrap gap-2 mb-2">
-          <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">${q.major_subject}</span>
-          <span class="px-2 py-1 bg-slate-50 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-200">${q.minor_subject}</span>
-          <span class="px-2 py-1 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider border border-blue-100">${q.question_type}</span>
-        </div>
-        <h3 class="text-xl font-black text-primary mb-6 leading-tight">${q.question_title}</h3>
-        
-        <div class="space-y-6">
-          ${q.image_position === 'TOP' ? imageHtml : ''}
-          <div class="markdown-body prose prose-slate max-w-none text-secondary leading-relaxed">
-            ${renderedContent}
-          </div>
-          ${q.image_position !== 'TOP' ? imageHtml : ''}
-        </div>
-        
-        <div class="mt-8 space-y-3">
-          <p class="text-[10px] font-bold text-muted uppercase tracking-widest">분석 데이터</p>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white p-4 rounded-xl border border-border flex flex-col items-center justify-center">
-              <span class="text-2xl font-black text-primary">${q.accuracy_rate}%</span>
-              <span class="text-[10px] text-muted font-bold mt-1">평균 정답률</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-border flex flex-col items-center justify-center">
-              <span class="text-sm font-bold text-primary">${formatDate(q.last_solved_at)}</span>
-              <span class="text-[10px] text-muted font-bold mt-1">최근 풀이</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-8">
-          <p class="text-[10px] font-bold text-muted uppercase tracking-widest mb-2">해설 및 정답 힌트</p>
-          <div class="markdown-body prose prose-slate prose-italic max-w-none bg-blue-50/30 p-6 rounded-2xl border border-blue-100/50 text-secondary">
-            ${renderedHint}
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  async function updateQuestion(event) {
-    event.preventDefault();
-    const form = event.target;
-    const btn = document.getElementById('update-btn');
-    if(!btn) return;
-    const originalText = btn.innerText;
-    
-    btn.disabled = true;
-    btn.innerText = '저장 중...';
-    
-    try {
-      const formData = new FormData(form);
-      // 서버 전송 전 지문에서 이미지 태그 제거 (정제 로직)
-      const cleanContent = formData.get('content').replace(/!\[.*?\]\(.*?\)/g, "").trim();
-      
-      // 정답 및 보기 데이터 수집
-      let finalOptions = null;
-      let finalAnswer = null;
-
-      if (currentDetailQuestion.question_type === 'MULTIPLE_CHOICE') {
-        const optionInputs = form.querySelectorAll('input[name="edit_option_text"]');
-        finalOptions = Array.from(optionInputs).map(input => input.value.trim()).filter(v => v !== '');
-        
-        const selectedRadio = form.querySelector('input[name="edit_correct_answer"]:checked');
-        finalAnswer = selectedRadio ? selectedRadio.value : (currentDetailQuestion.answer || '0');
-      } else {
-        finalAnswer = formData.get('edit_answer_text') || '';
-      }
-
-      const data = {
-        id: formData.get('id'),
-        major_subject: formData.get('major_subject'),
-        minor_subject: formData.get('minor_subject'),
-        question_title: formData.get('question_title'),
-        content: cleanContent,
-        image_url: currentDetailQuestion.image_url,
-        image_position: formData.get('image_position'),
-        remove_image: formData.get('remove_image') === 'true',
-        hint_explanation: formData.get('hint_explanation'),
-        question_type: currentDetailQuestion.question_type,
-        options: finalOptions,
-        answer: finalAnswer
-      };
-      
-      const imageFile = formData.get('imageFile');
-      if (imageFile && imageFile.size > 0) {
-        data.base64_image = await toBase64(imageFile);
-        data.image_filename = imageFile.name;
-      }
-
-      // [DEBUG] 전송 데이터 로그
-      console.log('[DEBUG] Update Payload:', data);
-      
-      google.script.run
-        .withSuccessHandler((response) => {
-          console.log('[DEBUG] Server Response:', response);
-          btn.disabled = false;
-          btn.innerText = originalText;
-          if (response && response.status === 'success') {
-            alert('수정되었습니다.');
-            loadManageList();
-            backToList();
-          } else {
-            alert('수정 실패: ' + (response ? response.message : 'Unknown'));
-          }
-        })
-        .withFailureHandler(() => {
-          btn.disabled = false;
-          btn.innerText = originalText;
-          alert('서버 오류');
-        })
-        .updateQuestion(data);
-    } catch (e) {
-      btn.disabled = false;
-      btn.innerText = originalText;
-      alert('오류 발생');
-    }
-  }
-
-  function deleteQuestion(id) {
-    if (!confirm('정말로 이 문제를 삭제하시겠습니까? 관련 풀이 이력도 함께 삭제됩니다.')) return;
-    google.script.run
-      .withSuccessHandler((response) => {
-        if (response && response.status === 'success') {
-          alert('삭제되었습니다.');
-          loadManageList();
-        } else {
-          alert('삭제 실패');
-        }
-      })
-      .deleteQuestion(id);
-  }
-
-  function removeImageFromQuestion() {
-    if (!confirm('현재 이미지를 제거하시겠습니까? (저장 시 반영)')) return;
-    const flagInput = document.getElementById('remove-image-flag');
-    if (flagInput) {
-      flagInput.value = 'true';
-      console.log('[DEBUG] Image removal flag set to true');
-    }
-    
-    // 이미지 위치 선택 상자도 'TOP'으로 초기값 변경 (선택 사항)
-    const posSelect = document.querySelector('select[name="image_position"]');
-    if (posSelect) posSelect.value = 'TOP';
-
-    const preview = document.getElementById('current-image-preview');
-    if (preview) preview.innerHTML = '<p class="text-[10px] text-red-500 font-bold">이미지 삭제 예정 (저장 버튼을 눌러주세요)</p>';
-  }
-
-  function addOptionToEdit() {
-    const list = document.getElementById('edit-options-list');
-    if (!list) return;
-    const idx = list.children.length;
-    const div = document.createElement('div');
-    div.className = 'flex items-center gap-2';
-    div.innerHTML = `
-      <input type="radio" name="edit_correct_answer" value="${idx}" class="w-4 h-4 text-accent">
-      <input type="text" name="edit_option_text" placeholder="새 보기 입력" class="flex-1 px-3 py-1.5 border border-border rounded-lg text-sm bg-white outline-none">
-      <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 px-1">✕</button>
-    `;
-    list.appendChild(div);
-  }
-
-  function cancelEdit() {
-    isEditMode = false;
-    updateEditToggleUI(false);
-    renderDetailContent(currentDetailQuestion, false);
-  }
-
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
     return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
-  /**
-   * 문제 폼 전송 핸들러
-   */
-  async function submitQuestion(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const submitBtn = document.getElementById('submit-btn');
-    
-    // 버튼 비활성화 (로딩 상태)
-    const originalBtnText = submitBtn.innerText;
-    submitBtn.disabled = true;
-    submitBtn.innerText = '저장 중...';
-    
-    try {
-      // 폼 데이터 수집
-      const formData = new FormData(form);
-      
-      const questionType = formData.get('question_type');
-      let optionsList = null;
-      let finalAnswer = null;
-
-      if (questionType === 'MULTIPLE_CHOICE') {
-        const optionInputs = form.querySelectorAll('input[name="options"]');
-        const mcAnswerRadio = form.querySelector('input[name="mc_answer"]:checked');
-        
-        if (optionInputs.length === 0) throw new Error('객관식 보기를 추가해주세요.');
-        if (!mcAnswerRadio) throw new Error('객관식 보기 중 정답을 선택해주세요.');
-        
-        optionsList = Array.from(optionInputs).map(el => el.value.trim());
-        const selectedIndex = parseInt(mcAnswerRadio.value, 10);
-        
-        // 정답을 배열 형태로 저장 ("보기 택스트"도 가능하나 인덱스 또는 텍스트 저장. 명세 반영하여 텍스트 배열로 저장)
-        finalAnswer = [optionsList[selectedIndex]];
-
-      } else if (questionType === 'FIND_AND_FILL') {
-        const blankInputs = form.querySelectorAll('input[name="blanks"]');
-        if (blankInputs.length === 0) throw new Error('빈칸(구역) 정답을 추가해주세요.');
-        
-        finalAnswer = Array.from(blankInputs).map(el => el.value.trim());
-
-      } else if (questionType === 'SHORT_ANSWER') {
-        const shortAnswerRaw = formData.get('short_answer') || '';
-        if (!shortAnswerRaw.trim()) throw new Error('단답형 정답을 입력해주세요.');
-        
-        finalAnswer = shortAnswerRaw.split(',').map(s => s.trim()).filter(s => s !== '');
-      }
-
-      // 명세서 규격에 맞춘 payload
-      // 지문에서 이미지 태그 제거
-      const cleanContent = formData.get('content').replace(/!\[.*?\]\(.*?\)/g, "").trim();
-
-      const data = {
-        major_subject: formData.get('major_subject'),
-        minor_subject: formData.get('minor_subject'),
-        question_title: formData.get('question_title'),
-        question_type: questionType,
-        content: cleanContent,
-        image_position: formData.get('image_position') || 'BOTTOM',
-        options: optionsList,
-        answer: finalAnswer,
-        hint_explanation: formData.get('hint_explanation')
-      };
-      
-      // [DEBUG] 문제 저장 페이로드 로그
-      console.log('[DEBUG] Create Payload:', data);
-
-      // 이미지 Base64 변환 (있는 경우)
-      const imageFile = formData.get('imageFile');
-      if (imageFile && imageFile.size > 0) {
-        data.base64_image = await toBase64(imageFile);
-        data.image_filename = imageFile.name;
-      }
-      
-      // 구글 앱스 스크립트 호출
-      google.script.run
-        .withSuccessHandler((response) => {
-          console.log('[DEBUG] Create Server Response:', response);
-          submitBtn.disabled = false;
-          submitBtn.innerText = originalBtnText;
-          
-          if (response && response.status === 'success') {
-            alert('문제가 성공적으로 저장되었습니다!');
-            resetQuestionForm(); // 폼 및 UI 상태 통합 초기화
-          } else {
-            alert('저장 실패: ' + (response ? response.message : '알 수 없는 오류'));
-          }
-        })
-        .withFailureHandler((error) => {
-          submitBtn.disabled = false;
-          submitBtn.innerText = originalBtnText;
-          console.error(error);
-          alert('서버 오류로 인해 저장에 실패했습니다.');
-        })
-        .router({ action: 'createQuestion', payload: data });
-        
-    } catch (error) {
-      submitBtn.disabled = false;
-      submitBtn.innerText = originalBtnText;
-      console.error(error);
-      alert('오류가 발생했습니다.');
-    }
-  }
-
-  /**
-   * File 객체를 Base64 문자열로 변환하는 유틸리티 함수
-   */
-  /**
-   * 문제 유형 변경 시 보기/정답 영역 표시 여부를 토글합니다.
-   */
-  function toggleOptionsArea() {
-    const typeSelect = document.getElementById('question_type');
-    const optionsArea = document.getElementById('options-area');
-    const blanksArea = document.getElementById('blanks-area');
-    const shortAnswerArea = document.getElementById('short-answer-area');
-    
-    if (typeSelect && optionsArea && blanksArea && shortAnswerArea) {
-      const type = typeSelect.value;
-      
-      // 영역 표시/숨김
-      optionsArea.style.display = type === 'MULTIPLE_CHOICE' ? 'block' : 'none';
-      blanksArea.style.display = type === 'FIND_AND_FILL' ? 'block' : 'none';
-      shortAnswerArea.style.display = type === 'SHORT_ANSWER' ? 'block' : 'none';
-      
-      // 비활성화된 영역의 입력 필드들을 disabled 처리하여 브라우저 검증 제외
-      // 객관식 필드들
-      const mcInputs = optionsArea.querySelectorAll('input');
-      mcInputs.forEach(input => input.disabled = (type !== 'MULTIPLE_CHOICE'));
-      
-      // 찾아넣기 필드들
-      const blankInputs = blanksArea.querySelectorAll('input');
-      blankInputs.forEach(input => input.disabled = (type !== 'FIND_AND_FILL'));
-      
-      // 단답형 필드들
-      const shortAnswerInput = shortAnswerArea.querySelector('input');
-      if (shortAnswerInput) {
-        shortAnswerInput.disabled = (type !== 'SHORT_ANSWER');
-        shortAnswerInput.required = (type === 'SHORT_ANSWER');
-      }
-    }
-  }
-
-  /**
-   * 문제 작성 폼과 관련 UI 상태를 완전히 초기화합니다.
-   */
-  function resetQuestionForm() {
-    const form = document.getElementById('question-form');
-    if (!form) return;
-
-    form.reset();
-    
-    // 동적 컨테이너 초기화
-    const optionsContainer = document.getElementById('options-container');
-    const blanksContainer = document.getElementById('blanks-container');
-    if (optionsContainer) optionsContainer.innerHTML = '';
-    if (blanksContainer) blanksContainer.innerHTML = '';
-    
-    // 카운터 및 상태 초기화
-    optionCount = 0;
-    
-    // UI 영역 상태 동기화 (form.reset()으로 돌아간 기본값에 맞춤)
-    toggleOptionsArea();
-    
-    // 기본 객관식 보기 4개 추가 (현재 타입이 객관식인 경우)
-    const typeSelect = document.getElementById('question_type');
-    if (typeSelect && typeSelect.value === 'MULTIPLE_CHOICE') {
-      for (let i = 0; i < 4; i++) addOption();
-    }
-  }
-
-  // 객관식 보기 개수 카운터
-  let optionCount = 0;
-  
-  function addOption() {
-    const container = document.getElementById('options-container');
-    const typeSelect = document.getElementById('question_type');
-    const isDisabled = typeSelect ? typeSelect.value !== 'MULTIPLE_CHOICE' : false;
-    
-    const index = optionCount++;
-    const div = document.createElement('div');
-    div.className = "flex items-center space-x-3";
-    div.innerHTML = `
-      <input type="radio" name="mc_answer" value="${index}" class="w-4 h-4 text-accent border-gray-300 focus:ring-accent flex-shrink-0 cursor-pointer" required ${isDisabled ? 'disabled' : ''}>
-      <input type="text" name="options" required class="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" placeholder="보기 내용 입력" ${isDisabled ? 'disabled' : ''}>
-      <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 focus:outline-none p-1 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-      </button>
-    `;
-    container.appendChild(div);
-  }
-
-  function addBlank() {
-    const container = document.getElementById('blanks-container');
-    const typeSelect = document.getElementById('question_type');
-    const isDisabled = typeSelect ? typeSelect.value !== 'FIND_AND_FILL' : false;
-
-    const div = document.createElement('div');
-    div.className = "flex items-center space-x-3";
-    div.innerHTML = `
-      <span class="text-sm font-semibold text-muted bg-slate-200 px-2 py-1 rounded w-8 text-center flex-shrink-0">${container.children.length + 1}</span>
-      <input type="text" name="blanks" required class="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" placeholder="정답 값 입력" ${isDisabled ? 'disabled' : ''}>
-      <button type="button" onclick="this.parentElement.remove(); updateBlankNumbers();" class="text-red-400 hover:text-red-600 focus:outline-none p-1 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-      </button>
-    `;
-    container.appendChild(div);
-  }
-
-  function updateBlankNumbers() {
-    const container = document.getElementById('blanks-container');
-    Array.from(container.children).forEach((child, idx) => {
-      child.querySelector('span').innerText = (idx + 1);
-    });
-  }
-
-  /**
-   * File 객체를 Base64 문자열로 변환하는 유틸리티 함수
-   */
   function toBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -782,12 +81,8 @@
     });
   }
 
-  // 초기화 (앱 로딩 후 화면 기본 세팅)
+  // 초기화
   document.addEventListener('DOMContentLoaded', () => {
     navigate('write');
-    // page-write-template 렌더링 이후여야 하므로 setTimeout을 통해 비동기로 처리
-    setTimeout(() => {
-      resetQuestionForm();
-    }, 50);
   });
 </script>

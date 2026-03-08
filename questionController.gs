@@ -281,3 +281,26 @@ function deleteQuestion(id) {
     return { status: 'error', message: error.message };
   }
 }
+
+/**
+ * 문제풀이용 문제 추출 (최대 10개 랜덤)
+ */
+function getQuestionsForSolve(filters = {}) {
+  try {
+    let endpoint = '/rest/v1/questions?select=*';
+    if (filters.major_subject) endpoint += `&major_subject=eq.${encodeURIComponent(filters.major_subject)}`;
+    if (filters.minor_subject) endpoint += `&minor_subject=eq.${encodeURIComponent(filters.minor_subject)}`;
+    
+    const response = supabaseFetch(endpoint, 'GET');
+    if (!response.success) throw new Error('문제 로드 실패: ' + response.error);
+
+    let questions = response.data;
+    // 단순 랜덤 셔플
+    questions.sort(() => Math.random() - 0.5);
+    // 최대 10개만 반환
+    return { status: 'success', data: questions.slice(0, 10) };
+  } catch (error) {
+    if (typeof sheetLogger !== 'undefined') sheetLogger.error('getQuestionsForSolve', error.message, error.stack);
+    return { status: 'error', message: error.message };
+  }
+}

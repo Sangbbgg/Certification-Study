@@ -43,6 +43,12 @@ function router(request) {
       case 'createQuestion':
         data = createQuestion(request.payload);
         break;
+      case 'getQuestionsForSolve':
+        data = getQuestionsForSolve(request.payload || {});
+        break;
+      case 'submitAnswer':
+        data = submitAnswer(request.payload);
+        break;
         
       default:
         throw new Error('알 수 없는 액션입니다: ' + action);

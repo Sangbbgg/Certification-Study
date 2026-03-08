@@ -1,0 +1,428 @@
+<template id="page-solve-template">
+  <div class="fade-in space-y-6">
+    <div class="flex justify-between items-center">
+      <h2 class="text-2xl font-bold tracking-tight text-primary">문제풀이</h2>
+      <div id="solve-progress" class="text-sm font-medium text-secondary bg-slate-100 px-3 py-1 rounded-full">
+        로드 중...
+      </div>
+    </div>
+
+    <!-- 필터 영역 추가 -->
+    <div class="p-4 bg-slate-50 rounded-xl border border-dashed border-border flex flex-wrap gap-4">
+      <div class="flex-1 min-w-[150px]">
+        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">대분류</label>
+        <select id="solve-filter-major" onchange="onSolveMajorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+          <option value="">전체 대분류</option>
+        </select>
+      </div>
+      <div class="flex-1 min-w-[150px]">
+        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">소분류</label>
+        <select id="solve-filter-minor" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+          <option value="">전체 소분류</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button onclick="initSolvePage()" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-black transition-colors">적용</button>
+      </div>
+    </div>
+
+    <!-- 문제 표시 카드 -->
+    <div id="solve-card" class="p-6 bg-surface rounded-xl border border-border shadow-sm min-h-[400px] flex flex-col">
+      <div id="question-display-area" class="flex-1 space-y-6">
+        <!-- JS에서 동적 렌더링 -->
+        <div class="animate-pulse space-y-4">
+          <div class="h-4 bg-slate-200 rounded w-1/4"></div>
+          <div class="h-8 bg-slate-200 rounded w-3/4"></div>
+          <div class="h-32 bg-slate-200 rounded"></div>
+        </div>
+      </div>
+
+      <!-- 답안 입력 영역 -->
+      <div id="answer-input-area" class="mt-8 pt-6 border-t border-border">
+        <!-- JS에서 문제 유형별 UI 주입 -->
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="mt-6 flex justify-between items-center border-t border-border pt-6">
+        <button id="hint-btn" onclick="toggleSolveHint()" class="text-xs font-bold text-accent hover:underline flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          힌트(해설) 보기
+        </button>
+        <div class="flex space-x-3">
+          <button id="submit-answer-btn" onclick="handleSolveSubmission()" class="bg-accent hover:bg-blue-600 text-white font-bold py-2.5 px-8 rounded-lg shadow-sm transition-all duration-200">
+            정답 제출
+          </button>
+          <button id="next-question-btn" onclick="loadNextQuestion()" class="hidden bg-slate-800 hover:bg-black text-white font-bold py-2.5 px-8 rounded-lg shadow-sm transition-all duration-200">
+            다음 문제
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 결과 및 해설 영역 (초기 숨김) -->
+    <div id="solve-result-area" class="hidden p-6 bg-blue-50/50 rounded-xl border border-blue-100 space-y-4">
+      <div class="flex items-center space-x-2">
+        <div id="result-status-icon"></div>
+        <h4 id="result-status-text" class="text-lg font-bold"></h4>
+      </div>
+      <div id="correct-answer-display" class="text-sm font-semibold text-primary py-2 px-4 bg-white rounded-lg border border-blue-200">
+        <!-- 정답 텍스트 -->
+      </div>
+      <div>
+        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">해설</p>
+        <div id="solve-explanation-content" class="markdown-body prose prose-slate max-w-none text-secondary text-sm">
+          <!-- 해설 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  /**
+   * 문제풀이 모듈 로직
+   */
+  var solveQuestions = [];
+  var currentSolveIndex = 0;
+  var allSolveReference = []; // 필터링용 전체 데이터 참조 (최초 로드 시)
+
+  function initSolvePage() {
+    solveQuestions = [];
+    currentSolveIndex = 0;
+    
+    var majorFilter = document.getElementById('solve-filter-major');
+    var minorFilter = document.getElementById('solve-filter-minor');
+    var payload = {
+      major_subject: majorFilter ? majorFilter.value : '',
+      minor_subject: minorFilter ? minorFilter.value : ''
+    };
+
+    var displayArea = document.getElementById('question-display-area');
+    if (displayArea) {
+      displayArea.innerHTML = [
+        '<div class="flex flex-col items-center justify-center py-20 space-y-4">',
+          '<div class="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>',
+          '<p class="text-sm text-muted">문제를 구성하는 중입니다...</p>',
+        '</div>'
+      ].join('');
+    }
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        // 라우터를 거치므로 response.status는 통신 성공 여부, response.data는 실제 컨트롤러의 응답
+        if (response && response.status === 'success' && response.data && response.data.status === 'success') {
+          var actualData = response.data.data;
+          if (actualData && actualData.length > 0) {
+            solveQuestions = actualData;
+            // 필터 초기화가 안 되어 있다면 (최초 진입 시) 전체 목록 기반으로 필터 생성
+            if (allSolveReference.length === 0) {
+              allSolveReference = actualData;
+              updateSolveFilterOptions();
+            }
+            renderCurrentQuestion();
+          } else {
+            showSolveError('조건에 맞는 문제가 없습니다. 필터를 변경해 보세요.');
+          }
+        } else {
+          var msg = (response && response.data && response.data.message) || (response && response.message) || '데이터 로드 중 오류가 발생했습니다.';
+          showSolveError(msg);
+        }
+      })
+      .withFailureHandler(function(error) {
+        showSolveError('서버 통신 오류가 발생했습니다.');
+        console.error(error);
+      })
+      .router({ action: 'getQuestionsForSolve', payload: payload });
+  }
+
+  function updateSolveFilterOptions() {
+    var majorSelect = document.getElementById('solve-filter-major');
+    if (!majorSelect || allSolveReference.length === 0) return;
+
+    var currentMajor = majorSelect.value;
+    var majors = [];
+    allSolveReference.forEach(function(q) {
+      if (majors.indexOf(q.major_subject) === -1) majors.push(q.major_subject);
+    });
+    majors.sort();
+
+    majorSelect.innerHTML = '<option value="">전체 대분류</option>' + 
+      majors.map(function(m) { return '<option value="' + m + '"' + (m === currentMajor ? ' selected' : '') + '>' + m + '</option>'; }).join('');
+    
+    onSolveMajorChange();
+  }
+
+  function onSolveMajorChange() {
+    var majorSelect = document.getElementById('solve-filter-major');
+    var minorSelect = document.getElementById('solve-filter-minor');
+    if (!majorSelect || !minorSelect) return;
+
+    var selectedMajor = majorSelect.value;
+    var currentMinor = minorSelect.value;
+    var minors = [];
+    
+    allSolveReference.forEach(function(q) {
+      if (!selectedMajor || q.major_subject === selectedMajor) {
+        if (minors.indexOf(q.minor_subject) === -1) minors.push(q.minor_subject);
+      }
+    });
+    minors.sort();
+
+    minorSelect.innerHTML = '<option value="">전체 소분류</option>' + 
+      minors.map(function(m) { return '<option value="' + m + '"' + (m === currentMinor ? ' selected' : '') + '>' + m + '</option>'; }).join('');
+  }
+
+  function renderCurrentQuestion() {
+    if (currentSolveIndex >= solveQuestions.length) {
+      showSolveComplete();
+      return;
+    }
+
+    var q = solveQuestions[currentSolveIndex];
+    var displayArea = document.getElementById('question-display-area');
+    var inputArea = document.getElementById('answer-input-area');
+    var progressText = document.getElementById('solve-progress');
+    var resultArea = document.getElementById('solve-result-area');
+    var submitBtn = document.getElementById('submit-answer-btn');
+    var nextBtn = document.getElementById('next-question-btn');
+
+    // UI 상태 초기화
+    resultArea.classList.add('hidden');
+    submitBtn.classList.remove('hidden');
+    nextBtn.classList.add('hidden');
+    progressText.innerText = (currentSolveIndex + 1) + ' / ' + solveQuestions.length;
+
+    // 1. 문제 지문 및 이미지 렌더링
+    var contentHtml = q.content || '';
+    var imageHtml = '';
+    if (q.image_url) {
+      var finalImageUrl = q.image_url;
+      var match = q.image_url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{25,})/);
+      if (match && q.image_url.indexOf('google') !== -1) finalImageUrl = 'https://lh3.googleusercontent.com/d/' + match[1];
+      imageHtml = '<div class="flex justify-center my-4"><img src="' + finalImageUrl + '" class="rounded-xl border border-border shadow-md max-w-full h-auto max-h-64"></div>';
+    }
+
+    if (typeof marked !== 'undefined') {
+      contentHtml = marked.parse(contentHtml.replace(/'''/g, '```'));
+    }
+
+    displayArea.innerHTML = [
+      '<div class="flex flex-wrap gap-2 mb-3">',
+        '<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">' + (q.major_subject || '') + '</span>',
+        '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold tracking-wider border border-slate-200">' + (q.minor_subject || '') + '</span>',
+        '<span class="px-2 py-0.5 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider border border-blue-100">' + (q.question_type || '') + '</span>',
+      '</div>',
+      '<h3 class="text-xl font-bold text-primary mb-4 leading-tight">' + (q.question_title || '') + '</h3>',
+      '<div class="space-y-4">',
+        (q.image_position === 'TOP' ? imageHtml : ''),
+        '<div class="markdown-body prose prose-slate max-w-none text-secondary text-sm leading-relaxed">',
+          contentHtml,
+        '</div>',
+        (q.image_position !== 'TOP' ? imageHtml : ''),
+      '</div>'
+    ].join('');
+
+    // 2. 문제 유형별 입력 UI 주입
+    inputArea.innerHTML = '';
+    if (q.question_type === 'MULTIPLE_CHOICE') {
+      var options = q.options || [];
+      var list = document.createElement('div');
+      list.className = 'space-y-2';
+      options.forEach(function(opt, idx) {
+        var item = document.createElement('label');
+        item.className = 'flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors group';
+        item.innerHTML = [
+          '<input type="radio" name="user-answer" value="' + opt + '" class="w-4 h-4 text-accent border-gray-300 focus:ring-accent cursor-pointer">',
+          '<span class="ml-3 text-sm text-secondary group-hover:text-primary transition-colors">' + opt + '</span>'
+        ].join('');
+        list.appendChild(item);
+      });
+      inputArea.appendChild(list);
+
+    } else if (q.question_type === 'FIND_AND_FILL') {
+      var expectedCount = Array.isArray(q.answer) ? q.answer.length : 1;
+      var grid = document.createElement('div');
+      grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3';
+      for (var i = 0; i < expectedCount; i++) {
+        var div = document.createElement('div');
+        div.className = 'flex items-center space-x-2';
+        div.innerHTML = [
+          '<span class="text-xs font-bold text-muted bg-slate-100 w-8 h-8 flex items-center justify-center rounded-lg border border-border">' + (i + 1) + '</span>',
+          '<input type="text" name="user-answer" class="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none" placeholder="정답 입력">'
+        ].join('');
+        grid.appendChild(div);
+      }
+      inputArea.appendChild(grid);
+
+    } else { // SHORT_ANSWER
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.name = 'user-answer';
+      input.className = 'w-full px-4 py-3 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none';
+      input.placeholder = '정답을 입력하세요 (여러 개의 경우 콤마로 구분 가능)';
+      input.onkeypress = function(e) { if (e.key === 'Enter') handleSolveSubmission(); };
+      inputArea.appendChild(input);
+    }
+  }
+
+  function handleSolveSubmission() {
+    var q = solveQuestions[currentSolveIndex];
+    if (!q) return;
+
+    var userAnswer = null;
+    if (q.question_type === 'MULTIPLE_CHOICE') {
+      var selected = document.querySelector('input[name="user-answer"]:checked');
+      if (!selected) { alert('답안을 선택해주세요.'); return; }
+      userAnswer = [selected.value];
+    } else if (q.question_type === 'FIND_AND_FILL') {
+      var inputs = document.querySelectorAll('input[name="user-answer"]');
+      userAnswer = Array.prototype.map.call(inputs, function(i) { return i.value.trim(); });
+      if (userAnswer.some(function(v) { return v === ''; })) { alert('모든 빈칸을 채워주세요.'); return; }
+    } else {
+      var input = document.querySelector('input[name="user-answer"]');
+      if (!input || !input.value.trim()) { alert('답안을 입력해주세요.'); return; }
+      userAnswer = input.value.split(',').map(function(s) { return s.trim(); });
+    }
+
+    var btn = document.getElementById('submit-answer-btn');
+    btn.disabled = true;
+    btn.innerText = '채점 중...';
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        btn.disabled = false;
+        btn.innerText = '정답 제출';
+        if (response && response.status === 'success' && response.data && response.data.status === 'success') {
+          showSolveResult(response.data.is_correct, q);
+        } else {
+          var msg = (response && response.data && response.data.message) || (response && response.message) || '알 수 없는 오류';
+          alert('채점 처리 중 오류가 발생했습니다: ' + msg);
+        }
+      })
+      .withFailureHandler(function(error) {
+        btn.disabled = false;
+        btn.innerText = '정답 제출';
+        alert('서버 통신 오류');
+      })
+      .router({ 
+        action: 'submitAnswer', 
+        payload: { question_id: q.id, user_answer: userAnswer } 
+      });
+  }
+
+  function showSolveResult(isCorrect, q) {
+    var resultArea = document.getElementById('solve-result-area');
+    var statusIcon = document.getElementById('result-status-icon');
+    var statusText = document.getElementById('result-status-text');
+    var answerDisplay = document.getElementById('correct-answer-display');
+    var explanationContent = document.getElementById('solve-explanation-content');
+    var submitBtn = document.getElementById('submit-answer-btn');
+    var nextBtn = document.getElementById('next-question-btn');
+
+    resultArea.classList.remove('hidden');
+    submitBtn.classList.add('hidden');
+    nextBtn.classList.remove('hidden');
+
+    if (isCorrect) {
+      statusIcon.innerHTML = '<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
+      statusText.innerText = '정답입니다!';
+      statusText.className = 'text-lg font-bold text-green-600';
+      resultArea.classList.toggle('bg-blue-50/50', false);
+      resultArea.classList.toggle('bg-green-50/50', true);
+      resultArea.classList.toggle('border-blue-100', false);
+      resultArea.classList.toggle('border-green-100', true);
+    } else {
+      statusIcon.innerHTML = '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>';
+      statusText.innerText = '오답입니다.';
+      statusText.className = 'text-lg font-bold text-red-600';
+      resultArea.classList.toggle('bg-green-50/50', false);
+      resultArea.classList.toggle('bg-red-50/50', true);
+      resultArea.classList.toggle('border-green-100', false);
+      resultArea.classList.toggle('border-red-100', true);
+    }
+
+    var correctAns = Array.isArray(q.answer) ? q.answer.join(', ') : q.answer;
+    answerDisplay.innerHTML = '<span class="text-[10px] text-muted mr-2">정답:</span> <span class="text-accent font-black">' + correctAns + '</span>';
+    answerDisplay.classList.remove('hidden');
+    
+    var explanation = q.hint_explanation || '해설이 등록되지 않았습니다.';
+    if (typeof marked !== 'undefined') {
+      explanation = marked.parse(explanation.replace(/'''/g, '```'));
+    }
+    explanationContent.innerHTML = explanation;
+    
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function toggleSolveHint() {
+    var q = solveQuestions[currentSolveIndex];
+    if (!q) return;
+
+    var resultArea = document.getElementById('solve-result-area');
+    var statusIcon = document.getElementById('result-status-icon');
+    var statusText = document.getElementById('result-status-text');
+    var answerDisplay = document.getElementById('correct-answer-display');
+    var explanationContent = document.getElementById('solve-explanation-content');
+
+    // 힌트 모드는 결과 텍스트를 중립적으로 표시
+    resultArea.classList.remove('hidden');
+    statusIcon.innerHTML = '<svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    statusText.innerText = '힌트/해설 확인';
+    statusText.className = 'text-lg font-bold text-accent';
+    resultArea.classList.toggle('bg-blue-50/50', true);
+    resultArea.classList.toggle('bg-green-50/50', false);
+    resultArea.classList.toggle('bg-red-50/50', false);
+    resultArea.classList.toggle('border-blue-100', true);
+    resultArea.classList.toggle('border-green-100', false);
+    resultArea.classList.toggle('border-red-100', false);
+
+    // 힌트 모드에서는 정답을 숨김
+    answerDisplay.classList.add('hidden');
+    
+    var explanation = q.hint_explanation || '해설이 등록되지 않았습니다.';
+    if (typeof marked !== 'undefined') {
+      explanation = marked.parse(explanation.replace(/'''/g, '```'));
+    }
+    explanationContent.innerHTML = explanation;
+    
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function loadNextQuestion() {
+    currentSolveIndex++;
+    renderCurrentQuestion();
+  }
+
+  function showSolveComplete() {
+    var card = document.getElementById('solve-card');
+    card.innerHTML = [
+      '<div class="flex flex-col items-center justify-center py-20 space-y-6 text-center">',
+        '<div class="bg-blue-100 p-6 rounded-full">',
+          '<svg class="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        '</div>',
+        '<div>',
+          '<h3 class="text-2xl font-black text-primary">학습 완료!</h3>',
+          '<p class="text-secondary mt-2">준비된 모든 문제를 풀었습니다.</p>',
+        '</div>',
+        '<button onclick="initSolvePage()" class="bg-accent hover:bg-blue-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition-all">',
+          '다시 풀기',
+        '</button>',
+      '</div>'
+    ].join('');
+    document.getElementById('solve-progress').innerText = '완료';
+    document.getElementById('solve-result-area').classList.add('hidden');
+    document.getElementById('submit-answer-btn').classList.add('hidden');
+    document.getElementById('next-question-btn').classList.add('hidden');
+  }
+
+  function showSolveError(msg) {
+    var displayArea = document.getElementById('question-display-area');
+    displayArea.innerHTML = [
+      '<div class="flex flex-col items-center justify-center py-20 text-center space-y-4">',
+        '<p class="text-red-500 font-medium">' + msg + '</p>',
+        '<button onclick="initSolvePage()" class="text-sm text-accent underline">새로고침 시도</button>',
+      '</div>'
+    ].join('');
+    document.getElementById('submit-answer-btn').disabled = true;
+  }
+</script>
