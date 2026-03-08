@@ -87,17 +87,33 @@
     try {
       // 폼 데이터 수집
       const formData = new FormData(form);
+      
+      const questionType = formData.get('question_type');
+      let optionsList = null;
+
+      // 객관식일 경우 options 데이터를 배열로 수집
+      if (questionType === 'MULTIPLE_CHOICE') {
+        optionsList = [];
+        const optionEls = form.querySelectorAll('input[name="options"]');
+        optionEls.forEach(el => {
+          if(el.value.trim() !== '') optionsList.push(el.value.trim());
+        });
+      }
+
+      // 정답 데이터 (배열 형태 변환, 단일 정답도 배열로 수집되도록 통일)
+      const answerRaw = formData.get('answer') || '';
+      const answerArr = answerRaw.split(',').map(s => s.trim()).filter(s => s !== '');
+
+      // 명세서 규격에 맞춘 payload
       const data = {
-        subject: formData.get('subject'),
+        major_subject: formData.get('major_subject'),
+        minor_subject: formData.get('minor_subject'),
+        question_title: formData.get('question_title'),
+        question_type: questionType,
         content: formData.get('content'),
-        options: [
-          formData.get('option1'),
-          formData.get('option2'),
-          formData.get('option3'),
-          formData.get('option4')
-        ],
-        answer: parseInt(formData.get('answer'), 10),
-        explanation: formData.get('explanation')
+        options: optionsList,
+        answer: answerArr.length > 0 ? JSON.stringify(answerArr) : null,
+        hint_explanation: formData.get('hint_explanation')
       };
       
       // 이미지 Base64 변환 (있는 경우)
@@ -132,6 +148,28 @@
       submitBtn.innerText = originalBtnText;
       console.error(error);
       alert('오류가 발생했습니다.');
+    }
+  }
+
+  /**
+   * File 객체를 Base64 문자열로 변환하는 유틸리티 함수
+   */
+  /**
+   * 문제 유형 변경 시 보기 영역 표시 여부를 토글합니다.
+   */
+  function toggleOptionsArea() {
+    const typeSelect = document.getElementById('question_type');
+    const optionsArea = document.getElementById('options-area');
+    const optionInputs = document.querySelectorAll('.option-input');
+    
+    if (typeSelect && optionsArea) {
+      if (typeSelect.value === 'MULTIPLE_CHOICE') {
+        optionsArea.style.display = 'block';
+        // HTML5 required 속성은 JS에서 제어하지 않고 필수 입력 해제 상태로 둡니다.
+      } else {
+        optionsArea.style.display = 'none';
+        optionInputs.forEach(input => input.value = ''); // 값 초기화
+      }
     }
   }
 
