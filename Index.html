@@ -128,31 +128,30 @@
 
           <!-- 역동적인 보기 영역 (객관식일 때만 표시) -->
           <div id="options-area" class="space-y-3 bg-slate-50 p-4 rounded-lg border border-border">
-            <p class="text-sm font-medium text-text">보기 설정 (객관식 전용)</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label for="option1" class="block text-xs text-muted mb-1">보기 1</label>
-                <input type="text" id="option1" name="options" class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow option-input">
-              </div>
-              <div>
-                <label for="option2" class="block text-xs text-muted mb-1">보기 2</label>
-                <input type="text" id="option2" name="options" class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow option-input">
-              </div>
-              <div>
-                <label for="option3" class="block text-xs text-muted mb-1">보기 3</label>
-                <input type="text" id="option3" name="options" class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow option-input">
-              </div>
-              <div>
-                <label for="option4" class="block text-xs text-muted mb-1">보기 4</label>
-                <input type="text" id="option4" name="options" class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow option-input">
-              </div>
+            <div class="flex justify-between items-center mb-2">
+              <p class="text-sm font-medium text-text">보기 설정 (객관식 전용)</p>
+              <button type="button" onclick="addOption()" class="text-xs bg-accent hover:bg-blue-600 text-white px-2 py-1 rounded shadow-sm transition-colors">+ 추가</button>
+            </div>
+            <div id="options-container" class="space-y-2">
+              <!-- JS에서 동적으로 보기 항목과 정답(Radio) 라디오 버튼 생성 -->
             </div>
           </div>
 
-          <!-- 정답 -->
-          <div>
-            <label for="answer" class="block text-sm font-medium text-text mb-1">정답 <span class="text-red-500">*</span></label>
-            <input type="text" id="answer" name="answer" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow" placeholder="다중 정답일 경우 콤마(,)로 구분해 입력하세요. 예: 1, 3">
+          <!-- 역동적인 찾아넣기 영역 (FIND_AND_FILL 일 때만 표시) -->
+          <div id="blanks-area" class="space-y-3 bg-slate-50 p-4 rounded-lg border border-border" style="display: none;">
+            <div class="flex justify-between items-center mb-2">
+              <p class="text-sm font-medium text-text">빈칸(구역) 정답 설정 (순서대로)</p>
+              <button type="button" onclick="addBlank()" class="text-xs bg-accent hover:bg-blue-600 text-white px-2 py-1 rounded shadow-sm transition-colors">+ 구역 추가</button>
+            </div>
+            <div id="blanks-container" class="space-y-2">
+              <!-- JS에서 동적으로 구역별 정답 Input 생성 -->
+            </div>
+          </div>
+
+          <!-- 단답형 정답 (SHORT_ANSWER 일 때만 표시) -->
+          <div id="short-answer-area" style="display: none;">
+            <label for="short_answer" class="block text-sm font-medium text-text mb-1">정답 <span class="text-red-500">*</span></label>
+            <input type="text" id="short_answer" name="short_answer" class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow" placeholder="다중 허용 정답일 경우 콤마(,)로 구분해 입력하세요.">
           </div>
           
           <!-- 힌트 및 해설 -->

@@ -70,16 +70,22 @@ function createQuestion(payload) {
       throw new Error("필수 입력 항목이 누락되었습니다.");
     }
     
+    // 새로운 문제의 고유 번호 할당
+    const newQuestionId = Utilities.getUuid();
+    
     let finalContent = content;
     
     // 이미지 파일이 전송된 경우 드라이브에 업로드 후 마크다운에 이미지 태그 추가
     if (base64_image && image_filename) {
-      const imageUrl = uploadImageToDrive(base64_image, image_filename);
-      finalContent += `\n\n![${image_filename}](${imageUrl})`;
+      const extension = image_filename.split('.').pop() || 'png';
+      const uniqueFilename = `${newQuestionId}.${extension}`; // UUID.확장자 형태로 저장
+      const imageUrl = uploadImageToDrive(base64_image, uniqueFilename);
+      finalContent += `\n\n![${uniqueFilename}](${imageUrl})`;
     }
     
     // DB 저장용 객체 생성
     const questionObj = {
+      id: newQuestionId,
       major_subject,
       minor_subject,
       question_title,
