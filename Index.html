@@ -78,6 +78,74 @@
     </div>
   </main>
 
+  <!-- Templates for SPA Pages -->
+  <template id="page-write-template">
+    <div class="fade-in space-y-6">
+      <h2 class="text-2xl font-bold tracking-tight text-primary">문제 작성</h2>
+      <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
+        <p class="text-sm font-semibold text-secondary mb-5 border-b border-border pb-2">기본 정보 입력</p>
+        <form id="question-form" onsubmit="submitQuestion(event)" class="space-y-5">
+          <!-- 과목명 -->
+          <div>
+            <label for="subject" class="block text-sm font-medium text-text mb-1">과목명</label>
+            <input type="text" id="subject" name="subject" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow" placeholder="예: 정보처리기사">
+          </div>
+          <!-- 문제 내용 -->
+          <div>
+            <label for="content" class="block text-sm font-medium text-text mb-1">문제 내용</label>
+            <textarea id="content" name="content" rows="4" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow resize-y" placeholder="문제를 입력하세요"></textarea>
+          </div>
+          <!-- 보기 1~4 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="option1" class="block text-sm font-medium text-text mb-1">보기 1</label>
+              <input type="text" id="option1" name="option1" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow">
+            </div>
+            <div>
+              <label for="option2" class="block text-sm font-medium text-text mb-1">보기 2</label>
+              <input type="text" id="option2" name="option2" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow">
+            </div>
+            <div>
+              <label for="option3" class="block text-sm font-medium text-text mb-1">보기 3</label>
+              <input type="text" id="option3" name="option3" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow">
+            </div>
+            <div>
+              <label for="option4" class="block text-sm font-medium text-text mb-1">보기 4</label>
+              <input type="text" id="option4" name="option4" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow">
+            </div>
+          </div>
+          <!-- 정답 -->
+          <div>
+            <label for="answer" class="block text-sm font-medium text-text mb-1">정답 선택</label>
+            <select id="answer" name="answer" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-white cursor-pointer transition-shadow">
+              <option value="" disabled selected>정답을 선택하세요</option>
+              <option value="1">보기 1</option>
+              <option value="2">보기 2</option>
+              <option value="3">보기 3</option>
+              <option value="4">보기 4</option>
+            </select>
+          </div>
+          <!-- 해설 -->
+          <div>
+            <label for="explanation" class="block text-sm font-medium text-text mb-1">해설</label>
+            <textarea id="explanation" name="explanation" rows="3" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y" placeholder="문제에 대한 해설을 입력하세요"></textarea>
+          </div>
+          <!-- 이미지 첨부 -->
+          <div>
+            <label for="imageFile" class="block text-sm font-medium text-text mb-1">이미지 첨부 (선택)</label>
+            <input type="file" id="imageFile" name="imageFile" accept="image/*" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-primary hover:file:bg-slate-200 transition-colors cursor-pointer">
+          </div>
+          <!-- 폼 전송 액션 -->
+          <div class="pt-4 flex justify-end">
+            <button type="submit" id="submit-btn" class="bg-accent hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              문제 저장
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
   <!-- Custom JS -->
   <?!= include('JS'); ?>
 </body>

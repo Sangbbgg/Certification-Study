@@ -2,17 +2,7 @@
   // 메뉴별 메인 영역 템플릿(Placeholder)
   // 장시간 학습에도 눈이 피로하지 않도록 차분한 색상(slate/muted 계열 등) 활용
   const pages = {
-    write: `
-      <div class="fade-in space-y-6">
-        <h2 class="text-2xl font-bold tracking-tight text-primary">문제 작성</h2>
-        <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
-          <p class="text-sm font-semibold text-secondary mb-3 border-b border-border pb-2">기본 정보 입력</p>
-          <div class="bg-bg p-8 rounded-lg border border-dashed border-border flex items-center justify-center min-h-[200px]">
-            <p class="text-sm text-muted text-center">이곳에 문제 작성 폼(문제 텍스트, 정답, 해설, 메타데이터 등)이 들어갑니다.</p>
-          </div>
-        </div>
-      </div>
-    `,
+    // write는 template 태그(page-write-template)에 의해 대체됩니다.
     analyze: `
       <div class="fade-in space-y-6">
         <h2 class="text-2xl font-bold tracking-tight text-primary">학습 분석</h2>
@@ -48,14 +38,19 @@
     `
   };
 
-  /**
-   * SPA 화면 전환 로직
-   * @param {string} pageId - 이동할 페이지 ID ('write', 'analyze', 'solve', 'exam')
-   */
   function navigate(pageId) {
     // 메인 컨테이너 내용 교체
     const mainContainer = document.getElementById('main-container');
-    mainContainer.innerHTML = pages[pageId] || '<p class="text-center text-muted my-10">해당 페이지를 찾을 수 없습니다.</p>';
+    
+    // 템플릿 태그가 있는지 확인 (예: page-write-template)
+    const templateId = 'page-' + pageId + '-template';
+    const templateElement = document.getElementById(templateId);
+    
+    if (templateElement) {
+      mainContainer.innerHTML = templateElement.innerHTML;
+    } else {
+      mainContainer.innerHTML = pages[pageId] || '<p class="text-center text-muted my-10">해당 페이지를 찾을 수 없습니다.</p>';
+    }
 
     // 탭 선택/해제 상태 업데이트
     const tabs = document.querySelectorAll('.tab-btn');
@@ -76,20 +71,80 @@
   }
 
   /**
-   * [Skeleton] 백엔드 데이터 비동기 호출 (google.script.run)
+   * 문제 폼 전송 핸들러
    */
-  function fetchData() {
-    /*
-    google.script.run
-      .withSuccessHandler(function(response) {
-        console.log('Backend Data Loaded:', response);
-      })
-      .withFailureHandler(function(error) {
-        console.error('Data Loading Failed:', error);
-      })
-      .backendFunction(); // Code.js에 구현될 실제 백엔드 함수명 작성
-    */
-    console.log('[Dev] fetchData() 호출 완료');
+  async function submitQuestion(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // 버튼 비활성화 (로딩 상태)
+    const originalBtnText = submitBtn.innerText;
+    submitBtn.disabled = true;
+    submitBtn.innerText = '저장 중...';
+    
+    try {
+      // 폼 데이터 수집
+      const formData = new FormData(form);
+      const data = {
+        subject: formData.get('subject'),
+        content: formData.get('content'),
+        options: [
+          formData.get('option1'),
+          formData.get('option2'),
+          formData.get('option3'),
+          formData.get('option4')
+        ],
+        answer: parseInt(formData.get('answer'), 10),
+        explanation: formData.get('explanation')
+      };
+      
+      // 이미지 Base64 변환 (있는 경우)
+      const imageFile = formData.get('imageFile');
+      if (imageFile && imageFile.size > 0) {
+        data.imageBase64 = await toBase64(imageFile);
+      }
+      
+      // 구글 앱스 스크립트 호출
+      google.script.run
+        .withSuccessHandler((response) => {
+          submitBtn.disabled = false;
+          submitBtn.innerText = originalBtnText;
+          
+          if (response && response.success) {
+            alert('문제가 성공적으로 저장되었습니다!');
+            form.reset(); // 폼 초기화
+          } else {
+            alert('저장 실패: ' + (response ? response.message : '알 수 없는 오류'));
+          }
+        })
+        .withFailureHandler((error) => {
+          submitBtn.disabled = false;
+          submitBtn.innerText = originalBtnText;
+          console.error(error);
+          alert('서버 오류로 인해 저장에 실패했습니다.');
+        })
+        .router({ action: 'createQuestion', payload: data });
+        
+    } catch (error) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = originalBtnText;
+      console.error(error);
+      alert('오류가 발생했습니다.');
+    }
+  }
+
+  /**
+   * File 객체를 Base64 문자열로 변환하는 유틸리티 함수
+   */
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
   }
 
   // 초기화 (앱 로딩 후 화면 기본 세팅)
