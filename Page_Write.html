@@ -26,7 +26,7 @@
         <!-- 문제 유형 -->
         <div>
           <label for="question_type" class="block text-sm font-medium text-text mb-1">문제 유형 <span class="text-red-500">*</span></label>
-          <select id="question_type" name="question_type" onchange="toggleOptionsArea()" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-white cursor-pointer transition-shadow">
+          <select id="question_type" name="question_type" onchange="toggleOptionsArea()" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
             <option value="MULTIPLE_CHOICE" selected>객관식 (MULTIPLE_CHOICE)</option>
             <option value="SHORT_ANSWER">단답/서술형 (SHORT_ANSWER)</option>
             <option value="FIND_AND_FILL">보기에서 찾아넣기 (FIND_AND_FILL)</option>
@@ -40,14 +40,14 @@
         </div>
 
         <!-- 이미지 첨부 및 위치 설정 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg border border-border">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-bg rounded-lg border border-border">
           <div>
             <label for="imageFile" class="block text-sm font-medium text-text mb-1">첨부 이미지</label>
-            <input type="file" id="imageFile" name="imageFile" accept="image/*" class="w-full text-xs text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-primary hover:file:bg-slate-300 transition-colors cursor-pointer">
+            <input type="file" id="imageFile" name="imageFile" accept="image/*" class="w-full text-xs text-secondary cursor-pointer">
           </div>
           <div>
             <label for="image_position" class="block text-sm font-medium text-text mb-1">이미지 표시 위치</label>
-            <select id="image_position" name="image_position" class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-white cursor-pointer transition-shadow">
+            <select id="image_position" name="image_position" class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
               <option value="TOP">상단 (지문 위)</option>
               <option value="BOTTOM" selected>하단 (지문 아래)</option>
             </select>
@@ -55,10 +55,10 @@
         </div>
 
         <!-- 역동적인 보기 영역 (객관식일 때만 표시) -->
-        <div id="options-area" class="space-y-3 bg-slate-50 p-4 rounded-lg border border-border">
+        <div id="options-area" class="space-y-3 bg-bg p-4 rounded-lg border border-border">
           <div class="flex justify-between items-center mb-2">
             <p class="text-sm font-medium text-text">보기 설정 (객관식 전용)</p>
-            <button type="button" onclick="addOption()" class="text-xs bg-accent hover:bg-blue-600 text-white px-2 py-1 rounded shadow-sm transition-colors">+ 추가</button>
+            <button type="button" onclick="addOption()" class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 추가</button>
           </div>
           <div id="options-container" class="space-y-2">
             <!-- JS에서 동적으로 보기 항목과 정답(Radio) 라디오 버튼 생성 -->
@@ -66,10 +66,10 @@
         </div>
 
         <!-- 역동적인 찾아넣기 영역 (FIND_AND_FILL 일 때만 표시) -->
-        <div id="blanks-area" class="space-y-3 bg-slate-50 p-4 rounded-lg border border-border" style="display: none;">
+        <div id="blanks-area" class="space-y-3 bg-bg p-4 rounded-lg border border-border" style="display: none;">
           <div class="flex justify-between items-center mb-2">
             <p class="text-sm font-medium text-text">빈칸(구역) 정답 설정 (순서대로)</p>
-            <button type="button" onclick="addBlank()" class="text-xs bg-accent hover:bg-blue-600 text-white px-2 py-1 rounded shadow-sm transition-colors">+ 구역 추가</button>
+            <button type="button" onclick="addBlank()" class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 구역 추가</button>
           </div>
           <div id="blanks-container" class="space-y-2">
             <!-- JS에서 동적으로 구역별 정답 Input 생성 -->
@@ -90,7 +90,7 @@
 
         <!-- 폼 전송 액션 -->
         <div class="pt-4 flex justify-end">
-          <button type="submit" id="submit-btn" class="bg-accent hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" id="submit-btn" class="bg-accent text-white font-bold py-2.5 px-6 rounded-lg shadow-sm focus:outline-none disabled:opacity-50">
             문제 저장
           </button>
         </div>
@@ -261,7 +261,7 @@
     const div = document.createElement('div');
     div.className = "flex items-center space-x-3";
     div.innerHTML = `
-      <span class="text-sm font-semibold text-muted bg-slate-200 px-2 py-1 rounded w-8 text-center flex-shrink-0">${container.children.length + 1}</span>
+      <span class="text-sm font-semibold text-muted bg-muted/20 px-2 py-1 rounded w-8 text-center flex-shrink-0">${container.children.length + 1}</span>
       <input type="text" name="blanks" required class="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" placeholder="정답 값 입력" ${isDisabled ? 'disabled' : ''}>
       <button type="button" onclick="this.parentElement.remove(); updateBlankNumbers();" class="text-red-400 hover:text-red-600 focus:outline-none p-1 transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>

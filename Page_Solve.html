@@ -2,28 +2,28 @@
   <div class="fade-in space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold tracking-tight text-primary">문제풀이</h2>
-      <div id="solve-progress" class="text-sm font-medium text-secondary bg-slate-100 px-3 py-1 rounded-full">
+      <div id="solve-progress" class="text-sm font-medium text-secondary bg-bg px-3 py-1 rounded-full border border-border">
         로드 중...
       </div>
     </div>
 
     <!-- 필터 및 정렬 영역 -->
-    <div class="p-4 bg-slate-50 rounded-xl border border-dashed border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="p-4 bg-bg rounded-xl border border-dashed border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="space-y-1">
         <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">대분류</label>
-        <select id="solve-filter-major" onchange="onSolveMajorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+        <select id="solve-filter-major" onchange="onSolveMajorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
           <option value="">전체 대분류</option>
         </select>
       </div>
       <div class="space-y-1">
         <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">소분류</label>
-        <select id="solve-filter-minor" onchange="onSolveMinorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+        <select id="solve-filter-minor" onchange="onSolveMinorChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
           <option value="">전체 소분류</option>
         </select>
       </div>
       <div class="space-y-1">
         <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">정렬 기준</label>
-        <select id="solve-sort-order" onchange="initSolvePage(false)" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+        <select id="solve-sort-order" onchange="initSolvePage(false)" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
           <option value="oldest">오래된순</option>
           <option value="newest">최근순</option>
           <option value="accuracy">정답률 저조순</option>
@@ -36,9 +36,9 @@
       <div id="question-display-area" class="flex-1 space-y-6">
         <!-- JS에서 동적 렌더링 -->
         <div class="animate-pulse space-y-4">
-          <div class="h-4 bg-slate-200 rounded w-1/4"></div>
-          <div class="h-8 bg-slate-200 rounded w-3/4"></div>
-          <div class="h-32 bg-slate-200 rounded"></div>
+          <div class="h-4 bg-muted/20 rounded w-1/4"></div>
+          <div class="h-8 bg-muted/20 rounded w-3/4"></div>
+          <div class="h-32 bg-muted/20 rounded"></div>
         </div>
       </div>
 
@@ -54,10 +54,10 @@
           힌트(해설) 보기
         </button>
         <div class="flex space-x-3">
-          <button id="submit-answer-btn" onclick="handleSolveSubmission()" class="bg-accent hover:bg-blue-600 text-white font-bold py-2.5 px-8 rounded-lg shadow-sm transition-all duration-200">
+          <button id="submit-answer-btn" onclick="handleSolveSubmission()" class="bg-accent text-white font-bold py-2.5 px-8 rounded-lg shadow-sm">
             정답 제출
           </button>
-          <button id="next-question-btn" onclick="loadNextQuestion()" class="hidden bg-slate-800 hover:bg-black text-white font-bold py-2.5 px-8 rounded-lg shadow-sm transition-all duration-200">
+          <button id="next-question-btn" onclick="loadNextQuestion()" class="hidden bg-secondary text-white font-bold py-2.5 px-8 rounded-lg shadow-sm">
             다음 문제
           </button>
         </div>
@@ -65,12 +65,12 @@
     </div>
 
     <!-- 결과 및 해설 영역 (초기 숨김) -->
-    <div id="solve-result-area" class="hidden p-6 bg-blue-50/50 rounded-xl border border-blue-100 space-y-4">
+    <div id="solve-result-area" class="hidden p-6 bg-accent/10 rounded-xl border border-accent/20 space-y-4">
       <div class="flex items-center space-x-2">
         <div id="result-status-icon"></div>
         <h4 id="result-status-text" class="text-lg font-bold"></h4>
       </div>
-      <div id="correct-answer-display" class="text-sm font-semibold text-primary py-2 px-4 bg-white rounded-lg border border-blue-200">
+      <div id="correct-answer-display" class="text-sm font-semibold text-primary py-2 px-4 bg-surface rounded-lg border border-accent/30">
         <!-- 정답 텍스트 -->
       </div>
       <div>
@@ -265,9 +265,9 @@
 
     displayArea.innerHTML = [
       '<div class="flex flex-wrap gap-2 mb-3">',
-        '<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">' + (q.major_subject || '') + '</span>',
-        '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold tracking-wider border border-slate-200">' + (q.minor_subject || '') + '</span>',
-        '<span class="px-2 py-0.5 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider border border-blue-100">' + (q.question_type || '') + '</span>',
+        '<span class="px-2 py-0.5 bg-bg text-secondary rounded text-[10px] font-bold uppercase tracking-wider">' + (q.major_subject || '') + '</span>',
+        '<span class="px-2 py-0.5 bg-bg text-secondary rounded text-[10px] font-bold tracking-wider border border-border">' + (q.minor_subject || '') + '</span>',
+        '<span class="px-2 py-0.5 bg-accent/10 text-accent rounded text-[10px] font-bold uppercase tracking-wider border border-accent/20">' + (q.question_type || '') + '</span>',
       '</div>',
       '<h3 class="text-xl font-bold text-primary mb-4 leading-tight">' + (q.question_title || '') + '</h3>',
       '<div class="space-y-4">',
@@ -287,7 +287,7 @@
       list.className = 'space-y-2';
       options.forEach(function(opt, idx) {
         var item = document.createElement('label');
-        item.className = 'flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors group';
+        item.className = 'flex items-center p-3 border border-border rounded-lg cursor-pointer hover:bg-bg transition-colors group';
         item.innerHTML = [
           '<input type="radio" name="user-answer" value="' + opt + '" class="w-4 h-4 text-accent border-gray-300 focus:ring-accent cursor-pointer">',
           '<span class="ml-3 text-sm text-secondary group-hover:text-primary transition-colors">' + opt + '</span>'
@@ -304,8 +304,8 @@
         var div = document.createElement('div');
         div.className = 'flex items-center space-x-2';
         div.innerHTML = [
-          '<span class="text-xs font-bold text-muted bg-slate-100 w-8 h-8 flex items-center justify-center rounded-lg border border-border">' + (i + 1) + '</span>',
-          '<input type="text" name="user-answer" class="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none" placeholder="정답 입력">'
+          '<span class="text-xs font-bold text-muted bg-bg w-8 h-8 flex items-center justify-center rounded-lg border border-border">' + (i + 1) + '</span>',
+          '<input type="text" name="user-answer" class="flex-1 px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none" placeholder="정답 입력">'
         ].join('');
         grid.appendChild(div);
       }
@@ -395,18 +395,18 @@
       statusIcon.innerHTML = '<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
       statusText.innerText = '정답입니다!';
       statusText.className = 'text-lg font-bold text-green-600';
-      resultArea.classList.toggle('bg-blue-50/50', false);
-      resultArea.classList.toggle('bg-green-50/50', true);
-      resultArea.classList.toggle('border-blue-100', false);
-      resultArea.classList.toggle('border-green-100', true);
+      resultArea.classList.toggle('bg-accent/10', false);
+      resultArea.classList.toggle('bg-green-500/10', true);
+      resultArea.classList.toggle('border-accent/20', false);
+      resultArea.classList.toggle('border-green-500/20', true);
     } else {
       statusIcon.innerHTML = '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>';
       statusText.innerText = '오답입니다.';
       statusText.className = 'text-lg font-bold text-red-600';
-      resultArea.classList.toggle('bg-green-50/50', false);
-      resultArea.classList.toggle('bg-red-50/50', true);
-      resultArea.classList.toggle('border-green-100', false);
-      resultArea.classList.toggle('border-red-100', true);
+      resultArea.classList.toggle('bg-green-500/10', false);
+      resultArea.classList.toggle('bg-red-500/10', true);
+      resultArea.classList.toggle('border-green-500/20', false);
+      resultArea.classList.toggle('border-red-500/20', true);
     }
 
     var correctAns = Array.isArray(q.answer) ? q.answer.join(', ') : q.answer;
@@ -437,12 +437,12 @@
     statusIcon.innerHTML = '<svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
     statusText.innerText = '힌트/해설 확인';
     statusText.className = 'text-lg font-bold text-accent';
-    resultArea.classList.toggle('bg-blue-50/50', true);
-    resultArea.classList.toggle('bg-green-50/50', false);
-    resultArea.classList.toggle('bg-red-50/50', false);
-    resultArea.classList.toggle('border-blue-100', true);
-    resultArea.classList.toggle('border-green-100', false);
-    resultArea.classList.toggle('border-red-100', false);
+    resultArea.classList.toggle('bg-accent/10', true);
+    resultArea.classList.toggle('bg-green-500/10', false);
+    resultArea.classList.toggle('bg-red-500/10', false);
+    resultArea.classList.toggle('border-accent/20', true);
+    resultArea.classList.toggle('border-green-500/20', false);
+    resultArea.classList.toggle('border-red-500/20', false);
 
     // 힌트 모드에서는 정답을 숨김
     answerDisplay.classList.add('hidden');
@@ -472,7 +472,7 @@
           '<h3 class="text-2xl font-black text-primary">학습 완료!</h3>',
           '<p class="text-secondary mt-2">준비된 모든 문제를 풀었습니다.</p>',
         '</div>',
-        '<button onclick="initSolvePage()" class="bg-accent hover:bg-blue-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition-all">',
+        '<button onclick="initSolvePage()" class="bg-accent text-white font-bold py-3 px-10 rounded-xl shadow-lg">',
           '다시 풀기',
         '</button>',
       '</div>'

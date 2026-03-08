@@ -6,23 +6,23 @@
     <div id="manage-list-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm">
       <div class="flex justify-between items-center mb-5 border-b border-border pb-2">
         <p class="text-sm font-semibold text-secondary">문제 목록</p>
-        <button onclick="loadManageList(true)" class="text-xs bg-slate-100 hover:bg-slate-200 text-primary px-3 py-1.5 rounded transition-colors flex items-center">
+        <button onclick="loadManageList(true)" class="text-xs bg-bg text-primary px-3 py-1.5 rounded flex items-center border border-border">
           <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           새로고침
         </button>
       </div>
 
       <!-- 필터 영역 -->
-      <div class="flex flex-wrap gap-4 mb-6 p-4 bg-slate-50 rounded-xl border border-dashed border-border">
+      <div class="flex flex-wrap gap-4 mb-6 p-4 bg-bg rounded-xl border border-dashed border-border">
         <div class="flex-1 min-w-[200px]">
           <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">대분류 필터</label>
-          <select id="filter-major" onchange="onMajorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+          <select id="filter-major" onchange="onMajorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
             <option value="">전체 대분류</option>
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
           <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">소분류 필터</label>
-          <select id="filter-minor" onchange="onMinorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+          <select id="filter-minor" onchange="onMinorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
             <option value="">전체 소분류</option>
           </select>
         </div>
@@ -54,9 +54,9 @@
         </button>
         <div class="flex items-center space-x-3">
           <span class="text-sm font-medium text-text">수정 모드</span>
-          <button onclick="toggleEditMode()" id="edit-toggle" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-200">
-            <span id="edit-toggle-slider" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
-          </button>
+          <button onclick="toggleEditMode()" id="edit-toggle" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-muted/20">
+              <span id="edit-toggle-slider" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+            </button>
         </div>
       </div>
 
@@ -65,8 +65,8 @@
         <div id="detail-content-wrapper" class="space-y-5"></div>
         
         <div id="edit-actions" class="pt-4 flex justify-end space-x-3" style="display: none;">
-          <button type="button" onclick="cancelEdit()" class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">취소</button>
-          <button type="submit" id="update-btn" class="bg-accent hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-all duration-200">수정 사항 저장</button>
+          <button type="button" onclick="cancelEdit()" class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-bg transition-colors">취소</button>
+          <button type="submit" id="update-btn" class="bg-accent text-white font-bold py-2 px-6 rounded-lg shadow-sm">수정 사항 저장</button>
         </div>
       </form>
     </div>
@@ -88,7 +88,7 @@
     }
     
     listBody.innerHTML = questions.map(q => `
-      <tr class="hover:bg-slate-50 transition-colors cursor-pointer group" onclick="viewQuestionDetail('${q.id}')">
+      <tr class="hover:bg-bg transition-colors cursor-pointer group" onclick="viewQuestionDetail('${q.id}')">
         <td class="px-4 py-4">
           <div class="font-medium text-primary group-hover:text-accent transition-colors truncate max-w-[200px] md:max-w-md">${q.question_title}</div>
           <div class="text-xs text-muted">${q.major_subject} > ${q.minor_subject}</div>
@@ -100,8 +100,8 @@
           </span>
         </td>
         <td class="px-4 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
-          <button onclick="viewQuestionDetail('${q.id}')" class="text-secondary hover:text-accent p-1 mr-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-          <button onclick="deleteQuestion('${q.id}')" class="text-red-300 hover:text-red-500 p-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+          <button onclick="viewQuestionDetail('${q.id}')" class="icon-btn mr-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+          <button onclick="deleteQuestion('${q.id}')" class="icon-btn text-red-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
         </td>
       </tr>
     `).join('');
@@ -232,15 +232,27 @@
     const slider = document.getElementById('edit-toggle-slider');
     const toggle = document.getElementById('edit-toggle');
     const actions = document.getElementById('edit-actions');
+    const form = document.getElementById('edit-question-form');
     if (slider && toggle && actions) {
+      // v87: 상태와 관계없이 슬라이더 색상은 테마에 맞춰 상시 고정 (가시성 확보)
+      slider.classList.remove('bg-white');
+      slider.classList.add('bg-slate-700', 'dark:bg-slate-100');
+
       if (isEnabled) {
         slider.classList.replace('translate-x-0', 'translate-x-5');
-        toggle.classList.replace('bg-slate-200', 'bg-accent');
+        // v88: 켜졌을 때는 테마색(blue)
+        toggle.classList.remove('bg-slate-300', 'dark:bg-slate-600', 'bg-muted/20');
+        toggle.classList.add('bg-accent');
         actions.style.display = 'flex';
+        // v79: 수정 모드 활성화 시 폼 컨테이너에 전용 클래스 추가
+        if (form) form.classList.add('edit-mode-active', 'p-6', 'rounded-xl');
       } else {
         slider.classList.replace('translate-x-5', 'translate-x-0');
-        toggle.classList.replace('bg-accent', 'bg-slate-200');
+        // v88: 꺼졌을 때는 더욱 명확한 회색 적용
+        toggle.classList.remove('bg-accent');
+        toggle.classList.add('bg-slate-300', 'dark:bg-slate-600');
         actions.style.display = 'none';
+        if (form) form.classList.remove('edit-mode-active', 'p-6', 'rounded-xl');
       }
     }
   }
@@ -278,30 +290,30 @@
              <input type="text" name="question_title" value="${q.question_title}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
         <div><label class="block text-xs font-medium text-muted mb-1">지문 (마크다운)</label>
              <textarea id="edit-content" name="content" rows="8" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none font-mono">${q.content}</textarea></div>
-        <div id="image-edit-section" class="space-y-3 p-4 bg-slate-50 rounded-xl border border-dashed border-border">
+        <div id="image-edit-section" class="space-y-3 p-4 bg-bg rounded-xl border border-dashed border-border">
           <label class="block text-xs font-bold text-primary uppercase tracking-tight">이미지 관리</label>
           <div id="current-image-preview">${imagePreviewHtml}</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><label class="block text-[10px] font-medium text-muted mb-1">이미지 위치</label>
-                 <select name="image_position" class="w-full px-3 py-1.5 border border-border rounded-lg text-sm bg-white outline-none">
+                 <select name="image_position" class="w-full px-3 py-1.5 border border-border rounded-lg text-sm bg-surface outline-none">
                    <option value="TOP" ${q.image_position === 'TOP' ? 'selected' : ''}>지문 위 (TOP)</option>
                    <option value="BOTTOM" ${q.image_position !== 'TOP' ? 'selected' : ''}>지문 아래 (BOTTOM)</option>
                  </select></div>
             <div><label class="block text-[10px] font-medium text-muted mb-1">새 이미지 업로드</label>
-                 <input type="file" name="imageFile" accept="image/*" class="w-full text-xs file:mr-4"></div>
+                 <input type="file" name="imageFile" accept="image/*" class="w-full text-xs"></div>
           </div>
         </div>
-        <div id="options-edit-section" class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 mt-4">
+        <div id="options-edit-section" class="p-4 bg-accent/10 rounded-xl border border-accent/20 mt-4">
           <label class="block text-xs font-bold text-blue-600 uppercase mb-3">정답 및 보기 설정</label>
           ${q.question_type === 'MULTIPLE_CHOICE' ? `
             <div id="edit-options-list" class="space-y-2">
               ${(q.options || []).map((opt, idx) => `<div class="flex items-center gap-2">
                 <input type="radio" name="edit_correct_answer" value="${idx}" ${String(idx) === String(q.answer) ? 'checked' : ''}>
-                <input type="text" name="edit_option_text" value="${opt}" class="flex-1 px-3 py-1.5 border rounded-lg text-sm bg-white">
+                <input type="text" name="edit_option_text" value="${opt}" class="flex-1 px-3 py-1.5 border border-border rounded-lg text-sm bg-surface">
                 <button type="button" onclick="this.parentElement.remove()" class="text-red-400 px-1">✕</button>
               </div>`).join('')}
             </div><button type="button" onclick="addOptionToEdit()" class="mt-2 text-xs text-accent font-bold">+ 보기 추가</button>` : `
-            <textarea name="edit_answer_text" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-mono">${q.answer || ''}</textarea>`}
+            <textarea name="edit_answer_text" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface font-mono">${q.answer || ''}</textarea>`}
         </div>
         <div><label class="block text-xs font-medium text-muted mb-1">해설 (마크다운)</label>
              <textarea name="hint_explanation" rows="4" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none font-mono">${q.hint_explanation || ''}</textarea></div>
@@ -335,8 +347,8 @@
       }
       wrapper.innerHTML = `
         <div class="flex flex-wrap gap-2 mb-2">
-          <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">${q.major_subject}</span>
-          <span class="px-2 py-1 bg-slate-50 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-200">${q.minor_subject}</span>
+          <span class="px-2 py-1 bg-bg text-secondary rounded text-[10px] font-bold uppercase tracking-wider">${q.major_subject}</span>
+          <span class="px-2 py-1 bg-bg text-secondary rounded text-[10px] font-bold uppercase tracking-wider border border-border">${q.minor_subject}</span>
           <span class="px-2 py-1 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider border border-blue-100">${q.question_type}</span>
         </div>
         <h3 class="text-xl font-black text-primary mb-6 leading-tight">${q.question_title}</h3>
@@ -346,18 +358,18 @@
           ${q.image_position !== 'TOP' ? imageHtml : ''}
         </div>
         <div class="grid grid-cols-2 gap-4 mt-8">
-          <div class="bg-white p-4 rounded-xl border border-border flex flex-col items-center">
+          <div class="bg-surface p-4 rounded-xl border border-border flex flex-col items-center">
             <span class="text-2xl font-black text-primary">${q.accuracy_rate}%</span>
             <span class="text-[10px] text-muted font-bold">평균 정답률</span>
           </div>
-          <div class="bg-white p-4 rounded-xl border border-border flex flex-col items-center">
+          <div class="bg-surface p-4 rounded-xl border border-border flex flex-col items-center">
             <span class="text-sm font-bold text-primary">${formatDate(q.last_solved_at)}</span>
             <span class="text-[10px] text-muted font-bold">최근 풀이</span>
           </div>
         </div>
         <div class="mt-8">
           <p class="text-[10px] font-bold text-muted uppercase mb-2">해설 및 정답 힌트</p>
-          <div class="markdown-body prose prose-slate prose-italic max-w-none bg-blue-50/30 p-6 rounded-2xl border border-blue-100/50 text-secondary">${renderedHint}</div>
+          <div class="markdown-body prose prose-slate prose-italic max-w-none bg-accent/5 p-6 rounded-2xl border border-accent/10 text-secondary">${renderedHint}</div>
         </div>
       `;
     }
@@ -460,7 +472,7 @@
     div.className = 'flex items-center gap-2';
     div.innerHTML = `
       <input type="radio" name="edit_correct_answer" value="${idx}">
-      <input type="text" name="edit_option_text" placeholder="새 보기 입력" class="flex-1 px-3 py-1.5 border rounded-lg text-sm bg-white">
+      <input type="text" name="edit_option_text" placeholder="새 보기 입력" class="flex-1 px-3 py-1.5 border border-border rounded-lg text-sm bg-surface">
       <button type="button" onclick="this.parentElement.remove()" class="text-red-400">✕</button>`;
     list.appendChild(div);
   }
