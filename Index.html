@@ -31,6 +31,8 @@
       }
     }
   </script>
+  <!-- marked.js (Markdown Parser) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   
   <!-- Custom CSS -->
   <?!= include('CSS'); ?>
@@ -55,7 +57,7 @@
       
       <button onclick="navigate('analyze')" class="tab-btn flex flex-col fold:flex-row items-center fold:justify-start py-3 fold:py-3 fold:px-4 fold:mb-2 w-full fold:w-auto text-muted hover:text-primary fold:hover:bg-slate-50 fold:rounded-lg focus:outline-none transition-colors duration-200 group" id="tab-analyze">
         <svg class="w-6 h-6 fold:mr-3 fold:w-5 fold:h-5 mb-1 fold:mb-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-        <span class="text-xs fold:text-base">학습 분석</span>
+        <span class="text-xs fold:text-base">문제관리 & 분석</span>
       </button>
 
       <button onclick="navigate('solve')" class="tab-btn flex flex-col fold:flex-row items-center fold:justify-start py-3 fold:py-3 fold:px-4 fold:mb-2 w-full fold:w-auto text-muted hover:text-primary fold:hover:bg-slate-50 fold:rounded-lg focus:outline-none transition-colors duration-200 group" id="tab-solve">
@@ -79,6 +81,71 @@
   </main>
 
   <!-- Templates for SPA Pages -->
+  <template id="page-analyze-template">
+    <div class="fade-in space-y-6">
+      <h2 class="text-2xl font-bold tracking-tight text-primary">문제관리 & 분석</h2>
+      
+      <!-- 리스트 영역 -->
+      <div id="manage-list-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm">
+        <div class="flex justify-between items-center mb-5 border-b border-border pb-2">
+          <p class="text-sm font-semibold text-secondary">문제 목록</p>
+          <button onclick="loadManageList()" class="text-xs bg-slate-100 hover:bg-slate-200 text-primary px-3 py-1.5 rounded transition-colors flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            새로고침
+          </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="text-xs text-muted uppercase border-b border-border">
+                <th class="px-4 py-3 font-medium">문제명</th>
+                <th class="px-4 py-3 font-medium text-center">최종 풀이</th>
+                <th class="px-4 py-3 font-medium text-center">정답률</th>
+                <th class="px-4 py-3 font-medium text-right">관리</th>
+              </tr>
+            </thead>
+            <tbody id="manage-list-body" class="divide-y divide-border">
+              <!-- JS에서 동적 생성 -->
+              <tr>
+                <td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 불러오는 중...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 상세 및 수정 영역 (초기 숨김) -->
+      <div id="manage-detail-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm space-y-6" style="display: none;">
+        <div class="flex justify-between items-center border-b border-border pb-2">
+          <button onclick="backToList()" class="text-sm text-secondary hover:text-primary flex items-center transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            목록으로 돌아가기
+          </button>
+          <div class="flex items-center space-x-3">
+            <span class="text-sm font-medium text-text">수정 모드</span>
+            <button onclick="toggleEditMode()" id="edit-toggle" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-200">
+              <span id="edit-toggle-slider" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+            </button>
+          </div>
+        </div>
+
+        <form id="edit-question-form" onsubmit="updateQuestion(event)" class="space-y-5">
+          <input type="hidden" id="edit-id" name="id">
+          <!-- 상세 내용 렌더링 (JS) -->
+          <div id="detail-content-wrapper" class="space-y-5">
+             <!-- view-mode와 edit-mode가 공존하며 toggle에 의해 제어됨 -->
+          </div>
+          
+          <div id="edit-actions" class="pt-4 flex justify-end space-x-3" style="display: none;">
+            <button type="button" onclick="cancelEdit()" class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">취소</button>
+            <button type="submit" id="update-btn" class="bg-accent hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-all duration-200">수정 사항 저장</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
   <template id="page-write-template">
     <div class="fade-in space-y-6">
       <h2 class="text-2xl font-bold tracking-tight text-primary">문제 작성</h2>

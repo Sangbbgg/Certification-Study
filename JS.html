@@ -5,11 +5,11 @@
     // write는 template 태그(page-write-template)에 의해 대체됩니다.
     analyze: `
       <div class="fade-in space-y-6">
-        <h2 class="text-2xl font-bold tracking-tight text-primary">학습 분석</h2>
+        <h2 class="text-2xl font-bold tracking-tight text-primary">문제관리 & 분석</h2>
         <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
           <p class="text-sm font-semibold text-secondary mb-3 border-b border-border pb-2">취약점 분석</p>
           <div class="bg-bg p-8 rounded-lg border border-dashed border-border flex items-center justify-center min-h-[200px]">
-            <p class="text-sm text-muted text-center">이곳에 학습 분석 차트(Chart.js 등 활용)와 통계 정보가 들어갑니다.</p>
+            <p class="text-sm text-muted text-center">이곳에 문제 통계 및 분석 정보가 들어갑니다.</p>
           </div>
         </div>
       </div>
@@ -48,6 +48,13 @@
     
     if (templateElement) {
       mainContainer.innerHTML = templateElement.innerHTML;
+      
+      // 페이지별 초기화 로직
+      if (pageId === 'analyze') {
+        loadManageList();
+      } else if (pageId === 'write') {
+        resetQuestionForm();
+      }
     } else {
       mainContainer.innerHTML = pages[pageId] || '<p class="text-center text-muted my-10">해당 페이지를 찾을 수 없습니다.</p>';
     }
@@ -68,6 +75,305 @@
 
     // 화면 최상단으로 스크롤 이동
     document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // --- 문제관리 & 분석 관련 전역 상태 ---
+  let allQuestions = [];
+  let currentDetailQuestion = null;
+  let isEditMode = false;
+
+  /**
+   * 문제 목록 테이블 렌더링
+   */
+  function renderManageList(questions) {
+    const listBody = document.getElementById('manage-list-body');
+    if (!listBody) return;
+    
+    if (questions.length === 0) {
+      listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">등록된 문제가 없습니다.</td></tr>';
+      return;
+    }
+    
+    listBody.innerHTML = questions.map(q => `
+      <tr class="hover:bg-slate-50 transition-colors cursor-pointer group" onclick="viewQuestionDetail('${q.id}')">
+        <td class="px-4 py-4">
+          <div class="font-medium text-primary group-hover:text-accent transition-colors truncate max-w-[200px] md:max-w-md">${q.question_title}</div>
+          <div class="text-xs text-muted">${q.major_subject} > ${q.minor_subject}</div>
+        </td>
+        <td class="px-4 py-4 text-center text-xs text-secondary whitespace-nowrap">${formatDate(q.last_solved_at)}</td>
+        <td class="px-4 py-4 text-center">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${q.accuracy_rate >= 80 ? 'bg-green-100 text-green-800' : q.accuracy_rate >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+            ${q.accuracy_rate}%
+          </span>
+        </td>
+        <td class="px-4 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+          <button onclick="viewQuestionDetail('${q.id}')" class="text-secondary hover:text-accent p-1 mr-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+          <button onclick="deleteQuestion('${q.id}')" class="text-red-300 hover:text-red-500 p-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  /**
+   * 문제 목록을 서버로부터 로드합니다.
+   */
+  function loadManageList() {
+    const listBody = document.getElementById('manage-list-body');
+    if (!listBody) return;
+    
+    listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 불러오는 중...</td></tr>';
+    
+    google.script.run
+      .withSuccessHandler((response) => {
+        if (response && response.status === 'success') {
+          allQuestions = response.data;
+          renderManageList(allQuestions);
+        } else {
+          listBody.innerHTML = `<tr><td colspan="4" class="px-4 py-10 text-center text-red-400">조회 실패: ${response ? response.message : '알 수 없는 오류'}</td></tr>`;
+        }
+      })
+      .withFailureHandler((error) => {
+        console.error(error);
+        listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-red-500">서버 통신 오류가 발생했습니다.</td></tr>';
+      })
+      .getQuestionsWithAnalytics();
+  }
+
+  /**
+   * 문제 상세 보기
+   */
+  function viewQuestionDetail(questionId) {
+    const question = allQuestions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    currentDetailQuestion = question;
+    isEditMode = false;
+    
+    const listArea = document.getElementById('manage-list-area');
+    const detailArea = document.getElementById('manage-detail-area');
+    if(listArea) listArea.style.display = 'none';
+    if(detailArea) detailArea.style.display = 'block';
+    
+    renderDetailContent(question, false);
+    updateEditToggleUI(false);
+  }
+
+  function backToList() {
+    const listArea = document.getElementById('manage-list-area');
+    const detailArea = document.getElementById('manage-detail-area');
+    if(listArea) listArea.style.display = 'block';
+    if(detailArea) detailArea.style.display = 'none';
+    currentDetailQuestion = null;
+  }
+
+  function toggleEditMode() {
+    isEditMode = !isEditMode;
+    updateEditToggleUI(isEditMode);
+    renderDetailContent(currentDetailQuestion, isEditMode);
+  }
+
+  function updateEditToggleUI(isEnabled) {
+    const slider = document.getElementById('edit-toggle-slider');
+    const toggle = document.getElementById('edit-toggle');
+    const actions = document.getElementById('edit-actions');
+    
+    if (slider && toggle && actions) {
+      if (isEnabled) {
+        slider.classList.replace('translate-x-0', 'translate-x-5');
+        toggle.classList.replace('bg-slate-200', 'bg-accent');
+        actions.style.display = 'flex';
+      } else {
+        slider.classList.replace('translate-x-5', 'translate-x-0');
+        toggle.classList.replace('bg-accent', 'bg-slate-200');
+        actions.style.display = 'none';
+      }
+    }
+  }
+
+  function renderDetailContent(q, isEdit) {
+    const wrapper = document.getElementById('detail-content-wrapper');
+    if (!wrapper) return;
+    
+    if (isEdit) {
+      // 수정 모드 HTML
+      wrapper.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="block text-xs font-medium text-muted mb-1">대과목</label>
+               <input type="text" name="major_subject" value="${q.major_subject}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
+          <div><label class="block text-xs font-medium text-muted mb-1">소과목</label>
+               <input type="text" name="minor_subject" value="${q.minor_subject}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
+        </div>
+        <div><label class="block text-xs font-medium text-muted mb-1">문제명</label>
+             <input type="text" name="question_title" value="${q.question_title}" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none"></div>
+        <div>
+          <label class="block text-xs font-medium text-muted mb-1">지문 (마크다운)</label>
+          <textarea id="edit-content" name="content" rows="8" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none font-mono">${q.content}</textarea>
+        </div>
+        
+        <div id="current-image-preview" class="space-y-2">
+          ${(() => {
+            const driveUrlRegex = /(?:id=|\/d\/)([a-zA-Z0-9_-]{25,})/;
+            const match = q.content.match(driveUrlRegex);
+            if (match) {
+              return `
+                <div class="relative inline-block group">
+                  <img src="https://drive.google.com/uc?id=${match[1]}" class="h-24 w-auto rounded-lg border border-border shadow-sm">
+                  <button type="button" onclick="removeImageFromContent()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                  <p class="text-[10px] text-muted mt-1">현재 등록된 이미지</p>
+                </div>
+              `;
+            }
+            return '';
+          })()}
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-muted mb-1">이미지 추가/변경 (선택)</label>
+          <input type="file" name="imageFile" accept="image/*" class="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-primary hover:file:bg-slate-200">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-muted mb-1">해설 (마크다운)</label>
+          <textarea name="hint_explanation" rows="4" required class="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-1 focus:ring-accent outline-none font-mono">${q.hint_explanation || ''}</textarea>
+        </div>
+      `;
+      document.getElementById('edit-id').value = q.id;
+    } else {
+      // 조회 모드 HTML (Markdown 렌더링 적용)
+      const renderedContent = typeof marked !== 'undefined' ? marked.parse(q.content) : q.content;
+      const renderedHint = typeof marked !== 'undefined' ? marked.parse(q.hint_explanation || '해설이 없습니다.') : (q.hint_explanation || '해설이 없습니다.');
+      
+      wrapper.innerHTML = `
+        <div class="flex flex-wrap gap-2 mb-2">
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${q.major_subject}</span>
+          <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${q.question_type}</span>
+        </div>
+        <h3 class="text-xl font-bold text-primary leading-tight">${q.question_title}</h3>
+        
+        <div class="mt-6">
+          <p class="text-[10px] font-bold text-muted uppercase tracking-widest mb-2">지문 내용</p>
+          <div class="markdown-body prose prose-slate max-w-none bg-slate-50/50 p-6 rounded-2xl border border-border shadow-inner-sm min-h-[100px]">
+            ${renderedContent}
+          </div>
+        </div>
+        
+        <div class="mt-8 space-y-3">
+          <p class="text-[10px] font-bold text-muted uppercase tracking-widest">분석 데이터</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-xl border border-border flex flex-col items-center justify-center">
+              <span class="text-2xl font-black text-primary">${q.accuracy_rate}%</span>
+              <span class="text-[10px] text-muted font-bold mt-1">평균 정답률</span>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-border flex flex-col items-center justify-center">
+              <span class="text-sm font-bold text-primary">${formatDate(q.last_solved_at)}</span>
+              <span class="text-[10px] text-muted font-bold mt-1">최근 풀이</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <p class="text-[10px] font-bold text-muted uppercase tracking-widest mb-2">해설 및 정답 힌트</p>
+          <div class="markdown-body prose prose-slate prose-italic max-w-none bg-blue-50/30 p-6 rounded-2xl border border-blue-100/50 text-secondary">
+            ${renderedHint}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  async function updateQuestion(event) {
+    event.preventDefault();
+    const form = event.target;
+    const btn = document.getElementById('update-btn');
+    if(!btn) return;
+    const originalText = btn.innerText;
+    
+    btn.disabled = true;
+    btn.innerText = '저장 중...';
+    
+    try {
+      const formData = new FormData(form);
+      const data = {
+        id: formData.get('id'),
+        major_subject: formData.get('major_subject'),
+        minor_subject: formData.get('minor_subject'),
+        question_title: formData.get('question_title'),
+        content: formData.get('content'),
+        hint_explanation: formData.get('hint_explanation'),
+        question_type: currentDetailQuestion.question_type,
+        options: currentDetailQuestion.options,
+        answer: currentDetailQuestion.answer
+      };
+      
+      const imageFile = formData.get('imageFile');
+      if (imageFile && imageFile.size > 0) {
+        data.base64_image = await toBase64(imageFile);
+        data.image_filename = imageFile.name;
+      }
+      
+      google.script.run
+        .withSuccessHandler((response) => {
+          btn.disabled = false;
+          btn.innerText = originalText;
+          if (response && response.status === 'success') {
+            alert('수정되었습니다.');
+            loadManageList();
+            backToList();
+          } else {
+            alert('수정 실패');
+          }
+        })
+        .withFailureHandler(() => {
+          btn.disabled = false;
+          btn.innerText = originalText;
+          alert('서버 오류');
+        })
+        .updateQuestion(data);
+    } catch (e) {
+      btn.disabled = false;
+      btn.innerText = originalText;
+      alert('오류 발생');
+    }
+  }
+
+  function deleteQuestion(id) {
+    if (!confirm('정말로 이 문제를 삭제하시겠습니까? 관련 풀이 이력도 함께 삭제됩니다.')) return;
+    google.script.run
+      .withSuccessHandler((response) => {
+        if (response && response.status === 'success') {
+          alert('삭제되었습니다.');
+          loadManageList();
+        } else {
+          alert('삭제 실패');
+        }
+      })
+      .deleteQuestion(id);
+  }
+
+  function removeImageFromContent() {
+    const textarea = document.getElementById('edit-content');
+    if (!textarea) return;
+    
+    // 마크다운 이미지 태그 정규식: ![alt](url)
+    const imageTagRegex = /!\[.*?\]\(.*?\)/g;
+    textarea.value = textarea.value.replace(imageTagRegex, "").trim();
+    
+    // 미리보기 영역 숨김
+    const preview = document.getElementById('current-image-preview');
+    if (preview) preview.innerHTML = '<p class="text-[10px] text-red-400 font-bold">이미지가 제거되었습니다. (저장 시 반영)</p>';
+  }
+
+  function cancelEdit() {
+    isEditMode = false;
+    updateEditToggleUI(false);
+    renderDetailContent(currentDetailQuestion, false);
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
   /**
