@@ -1,0 +1,17 @@
+# 모든 파일을 기본적으로 제외
+**/**
+
+# GAS 배포에 필요한 파일만 허용
+!appsscript.json
+!*.gs
+!*.js
+!*.html
+
+# 명시적 제외 (보안)
+.git/
+.env
+Antigravity_Skills/
+node_modules/
+.clasp.json
+.gitignore
+.claspignore
