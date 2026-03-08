@@ -40,10 +40,9 @@ function router(request) {
     
     switch(action) {
       // 프론트엔드에서 전달되는 action 값에 따라 각 모듈의 함수 호출 분기 처리
-      //
-      // case 'exampleAction':
-      //   data = exampleController(request.payload);
-      //   break;
+      case 'createQuestion':
+        data = createQuestion(request.payload);
+        break;
         
       default:
         throw new Error('알 수 없는 액션입니다: ' + action);
