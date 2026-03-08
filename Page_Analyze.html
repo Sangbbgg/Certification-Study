@@ -6,7 +6,7 @@
     <div id="manage-list-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm">
       <div class="flex justify-between items-center mb-5 border-b border-border pb-2">
         <p class="text-sm font-semibold text-secondary">문제 목록</p>
-        <button onclick="loadManageList()" class="text-xs bg-slate-100 hover:bg-slate-200 text-primary px-3 py-1.5 rounded transition-colors flex items-center">
+        <button onclick="loadManageList(true)" class="text-xs bg-slate-100 hover:bg-slate-200 text-primary px-3 py-1.5 rounded transition-colors flex items-center">
           <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           새로고침
         </button>
@@ -22,7 +22,7 @@
         </div>
         <div class="flex-1 min-w-[200px]">
           <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">소분류 필터</label>
-          <select id="filter-minor" onchange="applyFilters()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
+          <select id="filter-minor" onchange="onMinorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white focus:ring-1 focus:ring-accent outline-none">
             <option value="">전체 소분류</option>
           </select>
         </div>
@@ -107,9 +107,23 @@
     `).join('');
   }
 
-  function loadManageList() {
+  function loadManageList(forceRefresh) {
     const listBody = document.getElementById('manage-list-body');
     if (!listBody) return;
+
+    // 강제 새로고침 시 클라이언트 메모리 캐시도 초기화
+    if (forceRefresh) {
+      allQuestions = [];
+    }
+
+    // 메모리 캐시 확인 (강제 새로고침이 아닌 경우)
+    if (!forceRefresh && typeof allQuestions !== 'undefined' && allQuestions.length > 0) {
+      console.log('Using memory cache for Manage/Analyze Page');
+      updateFilterOptions(allQuestions);
+      renderManageList(allQuestions);
+      return;
+    }
+
     listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 불러오는 중...</td></tr>';
     
     google.script.run
@@ -150,12 +164,35 @@
       minors.map(m => `<option value="${m}" ${m === currentMinor ? 'selected' : ''}>${m}</option>`).join('');
   }
 
+  function onMinorFilterChange() {
+    const majorSelect = document.getElementById('filter-major');
+    const minorSelect = document.getElementById('filter-minor');
+    const minor = minorSelect.value;
+    
+    if (minor) {
+      // 소분류에 해당하는 첫 번째 문제의 대분류를 찾아 자동 선택
+      const matched = allQuestions.find(q => q.minor_subject === minor);
+      if (matched && majorSelect.value !== matched.major_subject) {
+        majorSelect.value = matched.major_subject;
+        // 대분류가 바뀌었으므로 소분류 목록도 해당 대분류 기준으로 다시 재구성
+        updateFilterOptions(allQuestions, matched.major_subject);
+        minorSelect.value = minor; // 소분류 값 유지
+      }
+    }
+    applyFilters();
+  }
+
   function applyFilters() {
     const majorSelect = document.getElementById('filter-major');
     const minorSelect = document.getElementById('filter-minor');
     const major = majorSelect.value;
     const minor = minorSelect.value;
-    updateFilterOptions(allQuestions, major);
+    
+    // 대분류가 선택되어 있고 소분류가 비어있으면 소분류 옵션만 업데이트
+    if (major && !minor) {
+      updateFilterOptions(allQuestions, major);
+    }
+    
     let filtered = allQuestions;
     if (major) filtered = filtered.filter(q => q.major_subject === major);
     if (minor) filtered = filtered.filter(q => q.minor_subject === minor);

@@ -113,6 +113,10 @@ function createQuestion(payload) {
       throw new Error('Supabase 저장 오류: ' + response.error);
     }
     
+    // 캐시 무효화
+    clearSupabaseCache();
+    Logger.log('[DEBUG] Server cache invalidated for list');
+    
     return { status: 'success', data: questionObj };
     
   } catch (error) {

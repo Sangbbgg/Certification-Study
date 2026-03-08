@@ -39,24 +39,37 @@ function submitAnswer(payload) {
     
     // 3. 풀이 이력 DB에 저장
     const historyObj = {
-      question_id,
+      question_id: question_id,
       user_answer: user_answer,
-      is_correct
+      is_correct: is_correct
     };
     
     const response = supabaseFetch('/rest/v1/learning_history', 'POST', historyObj);
     
+    if (!response.success) {
+      Logger.log('[ERROR] Learning history save failed: ' + response.error);
+      throw new Error("풀이 이력 저장에 실패했습니다: " + response.error);
+    }
+
+    // 통계 데이터 최신화를 위해 서버 캐시 무효화
+    clearSupabaseCache();
+    Logger.log('[SUCCESS] Answer submitted and cache invalidated. is_correct: ' + is_correct);
+    
     return {
       status: 'success',
       is_correct: is_correct,
-      data: response
+      data: response.data
     };
     
   } catch (error) {
+    Logger.log('[CRITICAL] submitAnswer Error: ' + error.message);
     if (typeof sheetLogger !== 'undefined') {
       sheetLogger.error('submitAnswer', error.message, error.stack);
     }
-    throw error;
+    return {
+      status: 'error',
+      message: error.message
+    };
   }
 }
 
