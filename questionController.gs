@@ -91,18 +91,13 @@ function createQuestion(payload) {
     };
     
     // DB INSERT 호출 (REST API)
-    const response = supabaseFetch('/rest/v1/questions', {
-      method: 'POST',
-      headers: {
-        'Prefer': 'return=representation'
-      },
-      payload: questionObj
-    });
+    const response = supabaseFetch('/rest/v1/questions', 'POST', questionObj);
     
-    return {
-      status: 'success',
-      data: response
-    };
+    if (!response.success) {
+      throw new Error('Supabase 저장 오류: ' + response.error);
+    }
+    
+    return response.data;
     
   } catch (error) {
     if (typeof sheetLogger !== 'undefined') {
@@ -131,14 +126,13 @@ function getQuestions(filters = {}) {
     // 최신 등록순으로 정렬
     endpoint += '&order=created_at.desc';
     
-    const response = supabaseFetch(endpoint, {
-      method: 'GET'
-    });
+    const response = supabaseFetch(endpoint, 'GET');
     
-    return {
-      status: 'success',
-      data: response
-    };
+    if (!response.success) {
+      throw new Error('Supabase 조회 오류: ' + response.error);
+    }
+    
+    return response.data;
     
   } catch (error) {
     if (typeof sheetLogger !== 'undefined') {

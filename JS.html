@@ -112,14 +112,15 @@
         question_type: questionType,
         content: formData.get('content'),
         options: optionsList,
-        answer: answerArr.length > 0 ? JSON.stringify(answerArr) : null,
+        answer: answerArr.length > 0 ? answerArr : null,
         hint_explanation: formData.get('hint_explanation')
       };
       
       // 이미지 Base64 변환 (있는 경우)
       const imageFile = formData.get('imageFile');
       if (imageFile && imageFile.size > 0) {
-        data.imageBase64 = await toBase64(imageFile);
+        data.base64_image = await toBase64(imageFile);
+        data.image_filename = imageFile.name;
       }
       
       // 구글 앱스 스크립트 호출
@@ -128,7 +129,7 @@
           submitBtn.disabled = false;
           submitBtn.innerText = originalBtnText;
           
-          if (response && response.success) {
+          if (response && response.status === 'success') {
             alert('문제가 성공적으로 저장되었습니다!');
             form.reset(); // 폼 초기화
           } else {
