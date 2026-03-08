@@ -1,0 +1,45 @@
+<style>
+  /* 
+    커스텀 CSS 정의 
+    메인 레이아웃 및 여백 등은 Tailwind CSS로 처리하고, 추가적인 트랜지션 및 
+    스타일 최적화 관련 로직만 반영합니다.
+  */
+  
+  /* SPA 라우팅 시 페이드 인 애니메이션 효과 */
+  .fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  /* 부드러운 스크롤 */
+  html, body {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent; /* 터치 기기에서 영역 클릭 시 반짝임 방지 */
+  }
+
+  /* 커스텀 스크롤바 디자인 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; 
+  }
+</style>

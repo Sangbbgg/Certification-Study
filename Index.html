@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>자격증 학습 보조 시스템</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          screens: {
+            'fold': '750px',
+            'lg': '1024px',
+          },
+          colors: {
+            // 차분한 색상 테마 (눈 피로도 감소)
+            primary: '#475569',   // slate-600
+            secondary: '#64748b', // slate-500
+            bg: '#f8fafc',        // slate-50
+            surface: '#ffffff',
+            text: '#334155',      // slate-700
+            muted: '#94a3b8',     // slate-400
+            border: '#e2e8f0',    // slate-200
+            accent: '#3b82f6',    // blue-500
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Custom CSS -->
+  <?!= include('CSS'); ?>
+</head>
+<body class="bg-bg text-text font-sans h-screen flex flex-col fold:flex-row overflow-hidden">
+  
+  <!-- GNB 영역 (모바일: 상단바 + 하단탭, 폴드/PC: 좌측 사이드바) -->
+  <aside class="flex-shrink-0 bg-surface border-border flex flex-col fold:border-r fold:w-64 lg:w-72 shadow-sm fold:shadow-none z-20 transition-all duration-300">
+    
+    <!-- 해더/심볼 부분 -->
+    <div class="h-14 fold:h-16 flex items-center justify-center fold:justify-start fold:px-6 border-b border-border bg-white sticky top-0">
+      <h1 class="text-lg fold:text-xl font-bold text-primary tracking-wide">학습 보조 시스템</h1>
+    </div>
+
+    <!-- 네비게이션: 모바일은 하단 고정, 폴드/PC는 좌측 메뉴 -->
+    <nav id="nav-menu" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-border fold:relative fold:border-t-0 fold:flex-1 fold:flex fold:flex-col fold:px-4 fold:py-6 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] fold:shadow-none z-50 flex justify-around fold:justify-start">
+      
+      <button onclick="navigate('write')" class="tab-btn flex flex-col fold:flex-row items-center fold:justify-start py-3 fold:py-3 fold:px-4 fold:mb-2 w-full fold:w-auto text-primary font-bold fold:bg-slate-100 fold:rounded-lg focus:outline-none transition-colors duration-200 group" id="tab-write">
+        <svg class="w-6 h-6 fold:mr-3 fold:w-5 fold:h-5 mb-1 fold:mb-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+        <span class="text-xs fold:text-base">문제 작성</span>
+      </button>
+      
+      <button onclick="navigate('analyze')" class="tab-btn flex flex-col fold:flex-row items-center fold:justify-start py-3 fold:py-3 fold:px-4 fold:mb-2 w-full fold:w-auto text-muted hover:text-primary fold:hover:bg-slate-50 fold:rounded-lg focus:outline-none transition-colors duration-200 group" id="tab-analyze">
+        <svg class="w-6 h-6 fold:mr-3 fold:w-5 fold:h-5 mb-1 fold:mb-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        <span class="text-xs fold:text-base">학습 분석</span>
+      </button>
+
+      <button onclick="navigate('solve')" class="tab-btn flex flex-col fold:flex-row items-center fold:justify-start py-3 fold:py-3 fold:px-4 fold:mb-2 w-full fold:w-auto text-muted hover:text-primary fold:hover:bg-slate-50 fold:rounded-lg focus:outline-none transition-colors duration-200 group" id="tab-solve">
+        <svg class="w-6 h-6 fold:mr-3 fold:w-5 fold:h-5 mb-1 fold:mb-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        <span class="text-xs fold:text-base">문제풀이</span>
+      </button>
+      
+      <button onclick="navigate('exam')" class="tab-btn flex flex-col fold:flex-row items-center fold:justify-start py-3 fold:py-3 fold:px-4 fold:mb-2 w-full fold:w-auto text-muted hover:text-primary fold:hover:bg-slate-50 fold:rounded-lg focus:outline-none transition-colors duration-200 group" id="tab-exam">
+        <svg class="w-6 h-6 fold:mr-3 fold:w-5 fold:h-5 mb-1 fold:mb-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <span class="text-xs fold:text-base">모의시험</span>
+      </button>
+
+    </nav>
+  </aside>
+
+  <!-- 메인 콘텐츠 영역 -->
+  <main class="flex-1 overflow-auto bg-bg h-[calc(100vh-56px-70px)] fold:h-screen w-full relative">
+    <div id="main-container" class="max-w-5xl mx-auto p-4 fold:p-8 pb-24 fold:pb-8 fade-in-container">
+      <!-- 이 영역의 DOM 요소가 JS에 의해 SPA 방식으로 교체됩니다 -->
+    </div>
+  </main>
+
+  <!-- Custom JS -->
+  <?!= include('JS'); ?>
+</body>
+</html>
