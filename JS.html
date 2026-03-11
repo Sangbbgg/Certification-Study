@@ -129,4 +129,44 @@
       navigate('write');
     });
   });
+  /**
+   * 실시간 마크다운 미리보기 패널 (v91: 비차단형)
+   */
+  let previewTargetId = null;
+
+  function openMarkdownPreview(targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    
+    previewTargetId = targetId;
+    const modal = document.getElementById('markdown-preview-panel');
+    if (modal) {
+      modal.classList.remove('hidden');
+      updateMarkdownPreviewNow();
+    }
+    
+    // 실시간 감지를 위해 oninput 이벤트 연결 (한 번만)
+    if (!el.dataset.previewBound) {
+      el.addEventListener('input', updateMarkdownPreviewNow);
+      el.dataset.previewBound = "true";
+    }
+  }
+
+  function updateMarkdownPreviewNow() {
+    if (!previewTargetId) return;
+    const el = document.getElementById(previewTargetId);
+    const modal = document.getElementById('markdown-preview-panel');
+    const display = modal ? modal.querySelector('.markdown-body') : null;
+    
+    if (el && display) {
+      const rawText = el.value || '내용이 없습니다.';
+      display.innerHTML = marked.parse(rawText);
+    }
+  }
+
+  function closeMarkdownPreview() {
+    const modal = document.getElementById('markdown-preview-panel');
+    if (modal) modal.classList.add('hidden');
+    previewTargetId = null;
+  }
 </script>

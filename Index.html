@@ -86,6 +86,25 @@
     </div>
   </main>
 
+  <!-- 전역 마크다운 미리보기 플로팅 패널 (v91: 비차단형) -->
+  <div id="markdown-preview-panel" class="fixed top-20 right-4 w-80 fold:w-96 h-[60vh] z-[100] hidden flex flex-col bg-surface border border-border rounded-2xl shadow-2xl transition-all duration-300 overflow-hidden">
+    <div class="flex justify-between items-center p-3 bg-accent text-white shrink-0">
+      <h3 class="text-xs font-bold flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+        실시간 마크다운 미리보기
+      </h3>
+      <button onclick="closeMarkdownPreview()" class="p-1 hover:bg-white/20 rounded transition-colors text-white">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div id="preview-content-area" class="flex-1 overflow-auto p-5 bg-bg/50 custom-scrollbar">
+      <div class="markdown-body text-sm"></div>
+    </div>
+    <div class="p-2 border-t border-border bg-surface text-[10px] text-muted text-center italic">
+      작성 중인 내용이 실시간으로 확인됩니다.
+    </div>
+  </div>
+
   <!-- Templates for SPA Pages -->
   <!-- 페이지별 모듈 포함 (Page_XXX.html) -->
   <?!= include('Page_Write'); ?>

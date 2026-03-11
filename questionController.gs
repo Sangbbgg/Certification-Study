@@ -160,21 +160,28 @@ function syncAllStats() {
   try {
     Logger.log('[DEBUG] syncAllStats Start');
     
-    // 1. 모든 풀이 이력 가져오기
-    const hResp = supabaseFetch('/rest/v1/learning_history?select=question_id,is_correct', 'GET');
+    // 1. 모든 풀이 이력 가져오기 (가장 최근 일시를 위해 created_at 추가)
+    const hResp = supabaseFetch('/rest/v1/learning_history?select=question_id,is_correct,created_at', 'GET');
     if (!hResp.success) return;
     
     const history = hResp.data;
     const statsMap = {};
     
     history.forEach(h => {
-      if (!statsMap[h.question_id]) statsMap[h.question_id] = { total: 0, correct: 0 };
+      if (!statsMap[h.question_id]) {
+        statsMap[h.question_id] = { total: 0, correct: 0, last_solved: null };
+      }
       statsMap[h.question_id].total++;
       if (h.is_correct) statsMap[h.question_id].correct++;
+      
+      // 최신 풀이 일시 갱신
+      const solveTime = new Date(h.created_at).getTime();
+      if (!statsMap[h.question_id].last_solved || solveTime > new Date(statsMap[h.question_id].last_solved).getTime()) {
+        statsMap[h.question_id].last_solved = h.created_at;
+      }
     });
     
-    // 2. 각 문제별로 통계 업데이트 (성능을 위해 개별 PATCH 수행 - 추후 RPC 고려 가능)
-    // 현재는 문항 수가 아주 많지 않으므로 반복문으로 처리
+    // 2. 각 문제별로 통계 업데이트
     for (const qId in statsMap) {
       const s = statsMap[qId];
       const accuracy = Math.round((s.correct / s.total) * 100);
@@ -182,7 +189,8 @@ function syncAllStats() {
       const payload = {
         total_attempts: s.total,
         correct_attempts: s.correct,
-        accuracy_rate: accuracy
+        accuracy_rate: accuracy,
+        last_solved_at: s.last_solved
       };
       
       supabaseFetch(`/rest/v1/questions?id=eq.${qId}`, 'PATCH', payload);

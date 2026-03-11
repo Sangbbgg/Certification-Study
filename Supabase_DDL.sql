@@ -11,6 +11,10 @@ CREATE TABLE public.questions (
     question_type TEXT NOT NULL CHECK (question_type IN ('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'FIND_AND_FILL')),
     options JSONB,
     answer JSONB NOT NULL,
+    total_attempts INTEGER DEFAULT 0,    -- [추가] 총 풀이 횟수
+    correct_attempts INTEGER DEFAULT 0,  -- [추가] 정답 횟수
+    accuracy_rate INTEGER DEFAULT 0,     -- [추가] 정답률 (%)
+    last_solved_at TIMESTAMP WITH TIME ZONE, -- [추가] 최종 풀이 일시
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
