@@ -63,12 +63,16 @@
           힌트(해설) 보기
         </button>
         <div class="flex space-x-3">
+          <button id="prev-question-btn" onclick="loadPrevQuestion()"
+            class="bg-bg text-secondary font-bold py-2.5 px-6 rounded-lg border border-border hover:bg-muted/10 transition-colors disabled:opacity-30">
+            이전 문제
+          </button>
           <button id="submit-answer-btn" onclick="handleSolveSubmission()"
-            class="bg-accent text-white font-bold py-2.5 px-8 rounded-lg shadow-sm">
+            class="bg-accent text-white font-bold py-2.5 px-8 rounded-lg shadow-sm disabled:opacity-50">
             정답 제출
           </button>
           <button id="next-question-btn" onclick="loadNextQuestion()"
-            class="hidden bg-secondary text-white font-bold py-2.5 px-8 rounded-lg shadow-sm">
+            class="bg-secondary text-white font-bold py-2.5 px-6 rounded-lg shadow-sm border border-secondary hover:bg-secondary/90 transition-colors disabled:opacity-30">
             다음 문제
           </button>
         </div>
@@ -253,12 +257,21 @@
     var resultArea = document.getElementById('solve-result-area');
     var submitBtn = document.getElementById('submit-answer-btn');
     var nextBtn = document.getElementById('next-question-btn');
+    var prevBtn = document.getElementById('prev-question-btn');
 
     // UI 상태 초기화
     resultArea.classList.add('hidden');
     submitBtn.classList.remove('hidden');
     submitBtn.disabled = false;
-    nextBtn.classList.add('hidden');
+
+    // 내비게이션 버튼 상태 업데이트 (v90 대응)
+    if (prevBtn) prevBtn.disabled = (currentSolveIndex === 0);
+    if (nextBtn) {
+      nextBtn.classList.remove('hidden');
+      nextBtn.disabled = (currentSolveIndex >= solveQuestions.length - 1);
+      // 마지막 문제일 때는 '다음 문제' 대신 '완료' 느낌을 줄 수도 있지만 일단 비활성화 유지
+    }
+
     progressText.innerText = (currentSolveIndex + 1) + ' / ' + solveQuestions.length;
 
     // 1. 문제 지문 및 이미지 렌더링
@@ -408,8 +421,7 @@
     var nextBtn = document.getElementById('next-question-btn');
 
     resultArea.classList.remove('hidden');
-    submitBtn.classList.add('hidden');
-    nextBtn.classList.remove('hidden');
+    // 정답 제출 후에도 다음 문제 버튼은 유지됨 (이미 render에서 상태 제어)
 
     if (isCorrect) {
       statusIcon.innerHTML = '<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
@@ -477,8 +489,19 @@
   }
 
   function loadNextQuestion() {
-    currentSolveIndex++;
-    renderCurrentQuestion();
+    if (currentSolveIndex < solveQuestions.length - 1) {
+      currentSolveIndex++;
+      renderCurrentQuestion();
+    } else {
+      showSolveComplete();
+    }
+  }
+
+  function loadPrevQuestion() {
+    if (currentSolveIndex > 0) {
+      currentSolveIndex--;
+      renderCurrentQuestion();
+    }
   }
 
   function showSolveComplete() {
