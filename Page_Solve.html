@@ -375,19 +375,33 @@
     // 줄바꿈 정규화 함수 (v줄바꿈대응)
     function normalizeStr(s) {
       if (s === undefined || s === null) return '';
+      // 모든 종류의 줄바꿈을 \n으로 통일하고 양 끝 공백 제거
       return String(s).replace(/\r\n|\r/g, '\n').trim();
     }
 
-    if (Array.isArray(q.answer)) {
-      var u = (userAnswer || []).map(normalizeStr);
-      var c = q.answer.map(normalizeStr);
-      // 순서대로 모든 답이 일치하는지 확인
-      isCorrect = (u.length === c.length && u.every(function (v, i) { return v === c[i]; }));
-      // 혹은 다중 허용 정답 중 하나라도 일치하는지 확인 (객관식/빈칸넣기에 활용 가능)
-      if (!isCorrect && u.length === 1) isCorrect = c.some(function (v) { return v === u[0]; });
+    // 1. 데이터 정규화 (배열 여부와 상관없이 비교 준비)
+    var uArr = (userAnswer || []).map(normalizeStr);
+    var uSingle = uArr[0] || '';
+
+    var cArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+    var cNormalized = cArr.map(normalizeStr);
+    var cCombined = cNormalized.join(','); // 콤마로 합친 버전 (구버전 대응)
+    var cCombinedSpace = cNormalized.join(', '); // 콤마+공백 합친 버전
+
+    // 2. 문제 유형별 채점 로직
+    if (q.question_type === 'SHORT_ANSWER') {
+      // 케이스 1: 전체 문자열이 일치하는지 (단일 정답 혹은 합쳐진 정답)
+      if (uSingle === cNormalized.join('\n') || uSingle === cCombined || uSingle === cCombinedSpace) {
+        isCorrect = true;
+      }
+      // 케이스 2: 배열 요소 중 하나라도 일치하는지 (허용 정답/유사어 대응)
+      else if (cNormalized.some(function (v) { return v === uSingle; })) {
+        isCorrect = true;
+      }
     } else {
-      // v91: 단일 텍스트 매칭 (줄바꿈 정문화 적용)
-      isCorrect = (normalizeStr(userAnswer[0]) === normalizeStr(q.answer[0] || q.answer));
+      // 객관식, 빈칸넣기 등 (기존 로직 유지)
+      isCorrect = (uArr.length === cNormalized.length && uArr.every(function (v, i) { return v === cNormalized[i]; }));
+      if (!isCorrect && uArr.length === 1) isCorrect = cNormalized.some(function (v) { return v === uArr[0]; });
     }
 
     // UI 즉시 반영
