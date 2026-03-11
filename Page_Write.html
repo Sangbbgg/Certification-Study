@@ -196,7 +196,8 @@
       } else if (questionType === 'SHORT_ANSWER') {
         const shortAnswerRaw = formData.get('short_answer') || '';
         if (!shortAnswerRaw.trim()) throw new Error('단답형 정답을 입력해주세요.');
-        finalAnswer = shortAnswerRaw.split(',').map(s => s.trim()).filter(s => s !== '');
+        // v90/v91: 콤마(,)로 분리하지 않고 전체 텍스트를 하나의 정답으로 처리하도록 변경 (줄바꿈 및 콤마 포함 정답 지원)
+        finalAnswer = [shortAnswerRaw.trim()];
       }
 
       const cleanContent = formData.get('content').replace(/!\[.*?\]\(.*?\)/g, "").trim();

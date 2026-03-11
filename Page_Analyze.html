@@ -428,7 +428,9 @@
         const selectedRadio = form.querySelector('input[name="edit_correct_answer"]:checked');
         finalAnswer = selectedRadio ? selectedRadio.value : (currentDetailQuestion.answer || '0');
       } else {
-        finalAnswer = formData.get('edit_answer_text') || '';
+        // v91: 저장 형식을 [ "전체 텍스트" ] 배열 형태로 통일
+        const rawText = formData.get('edit_answer_text') || '';
+        finalAnswer = [rawText.trim()];
       }
       const data = {
         id: formData.get('id'),

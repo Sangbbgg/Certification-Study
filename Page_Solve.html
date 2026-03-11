@@ -363,7 +363,8 @@
     } else {
       var input = document.querySelector('textarea[name="user-answer"]') || document.querySelector('input[name="user-answer"]');
       if (!input || !input.value.trim()) { alert('답안을 입력해주세요.'); return; }
-      userAnswer = input.value.split(',').map(function (s) { return s.trim(); });
+      // v90/v91: 콤마(,)로 분리하지 않고 전체 텍스트를 하나의 답변으로 처리 (정답 데이터 형식과 통일)
+      userAnswer = [input.value.trim()];
     }
 
     var btn = document.getElementById('submit-answer-btn');
@@ -382,10 +383,11 @@
       var c = q.answer.map(normalizeStr);
       // 순서대로 모든 답이 일치하는지 확인
       isCorrect = (u.length === c.length && u.every(function (v, i) { return v === c[i]; }));
-      // 혹은 다중 허용 정답 중 하나라도 일치하는지 확인 (단답형의 경우)
+      // 혹은 다중 허용 정답 중 하나라도 일치하는지 확인 (객관식/빈칸넣기에 활용 가능)
       if (!isCorrect && u.length === 1) isCorrect = c.some(function (v) { return v === u[0]; });
     } else {
-      isCorrect = (normalizeStr(userAnswer[0]) === normalizeStr(q.answer)); // SHORT_ANSWER는 userAnswer가 배열이므로 첫번째 요소 사용
+      // v91: 단일 텍스트 매칭 (줄바꿈 정문화 적용)
+      isCorrect = (normalizeStr(userAnswer[0]) === normalizeStr(q.answer[0] || q.answer));
     }
 
     // UI 즉시 반영
