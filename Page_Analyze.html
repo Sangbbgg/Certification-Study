@@ -1,13 +1,18 @@
 <template id="page-analyze-template">
   <div class="fade-in space-y-6">
     <h2 class="text-2xl font-bold tracking-tight text-primary">문제관리 & 분석</h2>
-    
+
     <!-- 리스트 영역 -->
     <div id="manage-list-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm">
       <div class="flex justify-between items-center mb-5 border-b border-border pb-2">
         <p class="text-sm font-semibold text-secondary">문제 목록</p>
-        <button onclick="loadManageList(true)" class="text-xs bg-bg text-primary px-3 py-1.5 rounded flex items-center border border-border">
-          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        <button onclick="loadManageList(true)"
+          class="text-xs bg-bg text-primary px-3 py-1.5 rounded flex items-center border border-border">
+          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+            </path>
+          </svg>
           새로고침
         </button>
       </div>
@@ -16,18 +21,20 @@
       <div class="flex flex-wrap gap-4 mb-6 p-4 bg-bg rounded-xl border border-dashed border-border">
         <div class="flex-1 min-w-[200px]">
           <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">대분류 필터</label>
-          <select id="filter-major" onchange="onMajorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
+          <select id="filter-major" onchange="onMajorFilterChange()"
+            class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
             <option value="">전체 대분류</option>
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
           <label class="block text-[10px] font-bold text-muted uppercase tracking-tight mb-1 ml-1">소분류 필터</label>
-          <select id="filter-minor" onchange="onMinorFilterChange()" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
+          <select id="filter-minor" onchange="onMinorFilterChange()"
+            class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
             <option value="">전체 소분류</option>
           </select>
         </div>
       </div>
-      
+
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
           <thead>
@@ -39,34 +46,45 @@
             </tr>
           </thead>
           <tbody id="manage-list-body" class="divide-y divide-border">
-            <tr><td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 불러오는 중...</td></tr>
+            <tr>
+              <td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 불러오는 중...</td>
+            </tr>
           </tbody>
         </table>
       </div>
     </div>
 
     <!-- 상세 및 수정 영역 (초기 숨김) -->
-    <div id="manage-detail-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm space-y-6" style="display: none;">
+    <div id="manage-detail-area" class="p-6 bg-surface rounded-xl border border-border shadow-sm space-y-6"
+      style="display: none;">
       <div class="flex justify-between items-center border-b border-border pb-2">
-        <button onclick="backToList()" class="text-sm text-secondary hover:text-primary flex items-center transition-colors">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <button onclick="backToList()"
+          class="text-sm text-secondary hover:text-primary flex items-center transition-colors">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+            </path>
+          </svg>
           목록으로 돌아가기
         </button>
         <div class="flex items-center space-x-3">
           <span class="text-sm font-medium text-text">수정 모드</span>
-          <button onclick="toggleEditMode()" id="edit-toggle" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-muted/20">
-              <span id="edit-toggle-slider" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
-            </button>
+          <button onclick="toggleEditMode()" id="edit-toggle"
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-muted/20">
+            <span id="edit-toggle-slider"
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+          </button>
         </div>
       </div>
 
       <form id="edit-question-form" onsubmit="updateQuestion(event)" class="space-y-5">
         <input type="hidden" id="edit-id" name="id">
         <div id="detail-content-wrapper" class="space-y-5"></div>
-        
+
         <div id="edit-actions" class="pt-4 flex justify-end space-x-3" style="display: none;">
-          <button type="button" onclick="cancelEdit()" class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-bg transition-colors">취소</button>
-          <button type="submit" id="update-btn" class="bg-accent text-white font-bold py-2 px-6 rounded-lg shadow-sm">수정 사항 저장</button>
+          <button type="button" onclick="cancelEdit()"
+            class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-bg transition-colors">취소</button>
+          <button type="submit" id="update-btn" class="bg-accent text-white font-bold py-2 px-6 rounded-lg shadow-sm">수정
+            사항 저장</button>
         </div>
       </form>
     </div>
@@ -81,12 +99,12 @@
   function renderManageList(questions) {
     const listBody = document.getElementById('manage-list-body');
     if (!listBody) return;
-    
+
     if (questions.length === 0) {
       listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">등록된 문제가 없습니다.</td></tr>';
       return;
     }
-    
+
     listBody.innerHTML = questions.map(q => `
       <tr class="hover:bg-bg transition-colors cursor-pointer group" onclick="viewQuestionDetail('${q.id}')">
         <td class="px-4 py-4">
@@ -115,9 +133,9 @@
     if (forceRefresh || allQuestions.length === 0 || isGlobalDataDirty) {
       const isSyncNeeded = isGlobalDataDirty; // Dirty 상태일 때만 서버 측 Sync 트리거
       listBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-muted">데이터를 최신화하는 중...</td></tr>';
-      
+
       console.log('[DEBUG] Analyze Page: Loading new data. SyncNeeded=' + isSyncNeeded);
-      loadGlobalData(function(data) {
+      loadGlobalData(function (data) {
         updateFilterOptions(data);
         renderManageList(data);
       }, isSyncNeeded);
@@ -138,13 +156,13 @@
     // 대분류 목록 초기화 (1회만)
     if (majorSelect.options.length <= 1) {
       const majors = [...new Set(data.map(q => q.major_subject))].sort();
-      majorSelect.innerHTML = '<option value="">전체 대분류</option>' + 
+      majorSelect.innerHTML = '<option value="">전체 대분류</option>' +
         majors.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
     // 현재 선택된 소분류 기억
     const currentMinor = minorSelect.value;
-    
+
     // 선택된 대분류에 속한 소분류들만 추출
     let minors = [];
     data.forEach(q => {
@@ -154,7 +172,7 @@
     });
     minors.sort();
 
-    minorSelect.innerHTML = '<option value="">전체 소분류</option>' + 
+    minorSelect.innerHTML = '<option value="">전체 소분류</option>' +
       minors.map(m => `<option value="${m}" ${m === currentMinor ? 'selected' : ''}>${m}</option>`).join('');
   }
 
@@ -162,10 +180,10 @@
     const majorSelect = document.getElementById('filter-major');
     const minorSelect = document.getElementById('filter-minor');
     const major = majorSelect.value;
-    
+
     // v64: 대분류 변경 시 소분류를 '전체'("")로 초기화
     if (minorSelect) minorSelect.value = "";
-    
+
     // 대분류 변경 시 소분류 목록 갱신 (계단식 필터)
     updateFilterOptions(allQuestions, major);
     applyFilters();
@@ -175,7 +193,7 @@
     const majorSelect = document.getElementById('filter-major');
     const minorSelect = document.getElementById('filter-minor');
     const minor = minorSelect.value;
-    
+
     if (minor) {
       // 소분류에 해당하는 첫 번째 문제의 대분류를 찾아 자동 선택
       const matched = allQuestions.find(q => q.minor_subject === minor);
@@ -194,7 +212,7 @@
     const minorSelect = document.getElementById('filter-minor');
     const major = majorSelect.value;
     const minor = minorSelect.value;
-    
+
     let filtered = allQuestions;
     if (major) filtered = filtered.filter(q => q.major_subject === major);
     if (minor) filtered = filtered.filter(q => q.minor_subject === minor);
@@ -208,8 +226,8 @@
     isEditMode = false;
     const listArea = document.getElementById('manage-list-area');
     const detailArea = document.getElementById('manage-detail-area');
-    if(listArea) listArea.style.display = 'none';
-    if(detailArea) detailArea.style.display = 'block';
+    if (listArea) listArea.style.display = 'none';
+    if (detailArea) detailArea.style.display = 'block';
     renderDetailContent(question, false);
     updateEditToggleUI(false);
   }
@@ -217,8 +235,8 @@
   function backToList() {
     const listArea = document.getElementById('manage-list-area');
     const detailArea = document.getElementById('manage-detail-area');
-    if(listArea) listArea.style.display = 'block';
-    if(detailArea) detailArea.style.display = 'none';
+    if (listArea) listArea.style.display = 'block';
+    if (detailArea) detailArea.style.display = 'none';
     currentDetailQuestion = null;
   }
 
@@ -321,7 +339,7 @@
                 <button type="button" onclick="this.parentElement.remove()" class="text-red-400 px-1">✕</button>
               </div>`).join('')}
             </div><button type="button" onclick="addOptionToEdit()" class="mt-2 text-xs text-accent font-bold">+ 보기 추가</button>` : `
-            <textarea name="edit_answer_text" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface font-mono">${q.answer || ''}</textarea>`}
+            <textarea name="edit_answer_text" rows="4" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface font-mono resize-y">${Array.isArray(q.answer) ? q.answer.join(', ') : (q.answer || '')}</textarea>`}
         </div>
         <div>
           <div class="flex justify-between items-end mb-1">
@@ -348,7 +366,7 @@
       if (typeof marked !== 'undefined') {
         try {
           const renderer = new marked.Renderer();
-          renderer.image = function(arg) {
+          renderer.image = function (arg) {
             let href = typeof arg === 'object' ? arg.href : arg;
             const match = href.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{25,})/);
             if (match && href.includes('google')) href = `https://lh3.googleusercontent.com/d/${match[1]}`;
@@ -395,7 +413,7 @@
     event.preventDefault();
     const form = event.target;
     const btn = document.getElementById('update-btn');
-    if(!btn) return;
+    if (!btn) return;
     const originalText = btn.innerText;
     btn.disabled = true;
     btn.innerText = '저장 중...';

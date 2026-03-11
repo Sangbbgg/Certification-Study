@@ -4,29 +4,40 @@
     <div class="p-6 bg-surface rounded-xl border border-border shadow-sm">
       <p class="text-sm font-semibold text-secondary mb-5 border-b border-border pb-2">문제 상세 정보 입력</p>
       <form id="question-form" onsubmit="submitQuestion(event)" class="space-y-5">
-        
+
         <!-- 과목 정보 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="major_subject" class="block text-sm font-medium text-text mb-1">대과목 <span class="text-red-500">*</span></label>
-            <input type="text" id="major_subject" name="major_subject" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow" placeholder="예: 정보처리기사">
+            <label for="major_subject" class="block text-sm font-medium text-text mb-1">대과목 <span
+                class="text-red-500">*</span></label>
+            <input type="text" id="major_subject" name="major_subject" required
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+              placeholder="예: 정보처리기사">
           </div>
           <div>
-            <label for="minor_subject" class="block text-sm font-medium text-text mb-1">소과목 <span class="text-red-500">*</span></label>
-            <input type="text" id="minor_subject" name="minor_subject" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow" placeholder="예: 소프트웨어 설계">
+            <label for="minor_subject" class="block text-sm font-medium text-text mb-1">소과목 <span
+                class="text-red-500">*</span></label>
+            <input type="text" id="minor_subject" name="minor_subject" required
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
+              placeholder="예: 소프트웨어 설계">
           </div>
         </div>
 
         <!-- 문제 제목 -->
         <div>
-          <label for="question_title" class="block text-sm font-medium text-text mb-1">문제명 <span class="text-red-500">*</span></label>
-          <input type="text" id="question_title" name="question_title" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow" placeholder="예: 다음 중 객체지향의 특징이 아닌 것은?">
+          <label for="question_title" class="block text-sm font-medium text-text mb-1">문제명 <span
+              class="text-red-500">*</span></label>
+          <input type="text" id="question_title" name="question_title" required
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow"
+            placeholder="예: 다음 중 객체지향의 특징이 아닌 것은?">
         </div>
 
         <!-- 문제 유형 -->
         <div>
-          <label for="question_type" class="block text-sm font-medium text-text mb-1">문제 유형 <span class="text-red-500">*</span></label>
-          <select id="question_type" name="question_type" onchange="toggleOptionsArea()" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
+          <label for="question_type" class="block text-sm font-medium text-text mb-1">문제 유형 <span
+              class="text-red-500">*</span></label>
+          <select id="question_type" name="question_type" onchange="toggleOptionsArea()" required
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
             <option value="MULTIPLE_CHOICE" selected>객관식 (MULTIPLE_CHOICE)</option>
             <option value="SHORT_ANSWER">단답/서술형 (SHORT_ANSWER)</option>
             <option value="FIND_AND_FILL">보기에서 찾아넣기 (FIND_AND_FILL)</option>
@@ -36,24 +47,36 @@
         <!-- 지문 -->
         <div>
           <div class="flex justify-between items-end mb-1">
-            <label for="content" class="block text-sm font-medium text-text">지문 (Markdown 지원) <span class="text-red-500">*</span></label>
-            <button type="button" onclick="openMarkdownPreview('content')" class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            <label for="content" class="block text-sm font-medium text-text">지문 (Markdown 지원) <span
+                class="text-red-500">*</span></label>
+            <button type="button" onclick="openMarkdownPreview('content')"
+              class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                </path>
+              </svg>
               미리보기
             </button>
           </div>
-          <textarea id="content" name="content" rows="4" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow resize-y" placeholder="문제 지문을 입력하세요 (코드, 설명 등)"></textarea>
+          <textarea id="content" name="content" rows="4" required
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow resize-y"
+            placeholder="문제 지문을 입력하세요 (코드, 설명 등)"></textarea>
         </div>
 
         <!-- 이미지 첨부 및 위치 설정 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-bg rounded-lg border border-border">
           <div>
             <label for="imageFile" class="block text-sm font-medium text-text mb-1">첨부 이미지</label>
-            <input type="file" id="imageFile" name="imageFile" accept="image/*" class="w-full text-xs text-secondary cursor-pointer">
+            <input type="file" id="imageFile" name="imageFile" accept="image/*"
+              class="w-full text-xs text-secondary cursor-pointer">
           </div>
           <div>
             <label for="image_position" class="block text-sm font-medium text-text mb-1">이미지 표시 위치</label>
-            <select id="image_position" name="image_position" class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
+            <select id="image_position" name="image_position"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
               <option value="TOP">상단 (지문 위)</option>
               <option value="BOTTOM" selected>하단 (지문 아래)</option>
             </select>
@@ -64,7 +87,8 @@
         <div id="options-area" class="space-y-3 bg-bg p-4 rounded-lg border border-border">
           <div class="flex justify-between items-center mb-2">
             <p class="text-sm font-medium text-text">보기 설정 (객관식 전용)</p>
-            <button type="button" onclick="addOption()" class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 추가</button>
+            <button type="button" onclick="addOption()"
+              class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 추가</button>
           </div>
           <div id="options-container" class="space-y-2">
             <!-- JS에서 동적으로 보기 항목과 정답(Radio) 라디오 버튼 생성 -->
@@ -75,7 +99,8 @@
         <div id="blanks-area" class="space-y-3 bg-bg p-4 rounded-lg border border-border" style="display: none;">
           <div class="flex justify-between items-center mb-2">
             <p class="text-sm font-medium text-text">빈칸(구역) 정답 설정 (순서대로)</p>
-            <button type="button" onclick="addBlank()" class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 구역 추가</button>
+            <button type="button" onclick="addBlank()"
+              class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 구역 추가</button>
           </div>
           <div id="blanks-container" class="space-y-2">
             <!-- JS에서 동적으로 구역별 정답 Input 생성 -->
@@ -84,25 +109,39 @@
 
         <!-- 단답형 정답 (SHORT_ANSWER 일 때만 표시) -->
         <div id="short-answer-area" style="display: none;">
-          <label for="short_answer" class="block text-sm font-medium text-text mb-1">정답 <span class="text-red-500">*</span></label>
-          <input type="text" id="short_answer" name="short_answer" class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow" placeholder="다중 허용 정답일 경우 콤마(,)로 구분해 입력하세요.">
+          <label for="short_answer" class="block text-sm font-medium text-text mb-1">정답 <span
+              class="text-red-500">*</span></label>
+          <textarea id="short_answer" name="short_answer" rows="3"
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y"
+            placeholder="다중행 정답을 입력할 수 있습니다. 다중 허용 정답일 경우 콤마(,)로 구분해 입력하세요."></textarea>
         </div>
-        
+
         <!-- 힌트 및 해설 -->
         <div>
           <div class="flex justify-between items-end mb-1">
-            <label for="hint_explanation" class="block text-sm font-medium text-text">힌트 및 해설 (Markdown 지원) <span class="text-red-500">*</span></label>
-            <button type="button" onclick="openMarkdownPreview('hint_explanation')" class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            <label for="hint_explanation" class="block text-sm font-medium text-text">힌트 및 해설 (Markdown 지원) <span
+                class="text-red-500">*</span></label>
+            <button type="button" onclick="openMarkdownPreview('hint_explanation')"
+              class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                </path>
+              </svg>
               미리보기
             </button>
           </div>
-          <textarea id="hint_explanation" name="hint_explanation" rows="3" required class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y" placeholder="문제에 대한 힌트 및 해설을 입력하세요"></textarea>
+          <textarea id="hint_explanation" name="hint_explanation" rows="3" required
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y"
+            placeholder="문제에 대한 힌트 및 해설을 입력하세요"></textarea>
         </div>
 
         <!-- 폼 전송 액션 -->
         <div class="pt-4 flex justify-end">
-          <button type="submit" id="submit-btn" class="bg-accent text-white font-bold py-2.5 px-6 rounded-lg shadow-sm focus:outline-none disabled:opacity-50">
+          <button type="submit" id="submit-btn"
+            class="bg-accent text-white font-bold py-2.5 px-6 rounded-lg shadow-sm focus:outline-none disabled:opacity-50">
             문제 저장
           </button>
         </div>
@@ -115,25 +154,25 @@
   /**
    * 문제 작성 페이지 전용 로직
    */
-  
+
   // 객관식 보기 개수 카운터
   let optionCount = 0;
 
   async function submitQuestion(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const submitBtn = document.getElementById('submit-btn');
-    
+
     // 버튼 비활성화 (로딩 상태)
     const originalBtnText = submitBtn.innerText;
     submitBtn.disabled = true;
     submitBtn.innerText = '저장 중...';
-    
+
     try {
       // 폼 데이터 수집
       const formData = new FormData(form);
-      
+
       const questionType = formData.get('question_type');
       let optionsList = null;
       let finalAnswer = null;
@@ -141,10 +180,10 @@
       if (questionType === 'MULTIPLE_CHOICE') {
         const optionInputs = form.querySelectorAll('input[name="options"]');
         const mcAnswerRadio = form.querySelector('input[name="mc_answer"]:checked');
-        
+
         if (optionInputs.length === 0) throw new Error('객관식 보기를 추가해주세요.');
         if (!mcAnswerRadio) throw new Error('객관식 보기 중 정답을 선택해주세요.');
-        
+
         optionsList = Array.from(optionInputs).map(el => el.value.trim());
         const selectedIndex = parseInt(mcAnswerRadio.value, 10);
         finalAnswer = [optionsList[selectedIndex]];
@@ -179,7 +218,7 @@
         data.base64_image = await toBase64(imageFile);
         data.image_filename = imageFile.name;
       }
-      
+
       google.script.run
         .withSuccessHandler((response) => {
           submitBtn.disabled = false;
@@ -198,7 +237,7 @@
           alert('서버 오류로 인해 저장에 실패했습니다.');
         })
         .router({ action: 'createQuestion', payload: data });
-        
+
     } catch (error) {
       submitBtn.disabled = false;
       submitBtn.innerText = originalBtnText;
@@ -212,18 +251,18 @@
     const optionsArea = document.getElementById('options-area');
     const blanksArea = document.getElementById('blanks-area');
     const shortAnswerArea = document.getElementById('short-answer-area');
-    
+
     if (typeSelect && optionsArea && blanksArea && shortAnswerArea) {
       const type = typeSelect.value;
       optionsArea.style.display = type === 'MULTIPLE_CHOICE' ? 'block' : 'none';
       blanksArea.style.display = type === 'FIND_AND_FILL' ? 'block' : 'none';
       shortAnswerArea.style.display = type === 'SHORT_ANSWER' ? 'block' : 'none';
-      
+
       const mcInputs = optionsArea.querySelectorAll('input');
       mcInputs.forEach(input => input.disabled = (type !== 'MULTIPLE_CHOICE'));
       const blankInputs = blanksArea.querySelectorAll('input');
       blankInputs.forEach(input => input.disabled = (type !== 'FIND_AND_FILL'));
-      const shortAnswerInput = shortAnswerArea.querySelector('input');
+      const shortAnswerInput = shortAnswerArea.querySelector('textarea') || shortAnswerArea.querySelector('input');
       if (shortAnswerInput) {
         shortAnswerInput.disabled = (type !== 'SHORT_ANSWER');
         shortAnswerInput.required = (type === 'SHORT_ANSWER');
