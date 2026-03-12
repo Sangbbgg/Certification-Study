@@ -285,4 +285,64 @@
   .text-accent {
     color: var(--accent) !important;
   }
+
+  /* 계산장 전용 스타일 (v추가) */
+  #scratchpad-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none; /* 기본적으로는 아래 클릭 가능 */
+    transition: opacity 0.3s ease;
+  }
+
+  #scratchpad-container.active {
+    pointer-events: auto; /* 활성화 시 캔버스 클릭 가능 */
+  }
+
+  #scratchpad-canvas {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    background-color: transparent;
+  }
+
+  #scratchpad-controls {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.75rem;
+    border-radius: 1rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: auto;
+  }
+
+  .scratchpad-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--secondary);
+  }
+
+  .scratchpad-btn.active {
+    background-color: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .scratchpad-btn:hover {
+    background-color: var(--border);
+  }
 </style>
