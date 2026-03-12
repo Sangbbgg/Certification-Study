@@ -8,30 +8,42 @@
       </div>
     </div>
 
-    <!-- 필터 및 정렬 영역 -->
-    <div class="p-4 bg-bg rounded-xl border border-dashed border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="space-y-1">
-        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">대분류</label>
-        <select id="solve-filter-major" onchange="onSolveMajorChange()"
-          class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
-          <option value="">전체 대분류</option>
-        </select>
-      </div>
-      <div class="space-y-1">
-        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">소분류</label>
-        <select id="solve-filter-minor" onchange="onSolveMinorChange()"
-          class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
-          <option value="">전체 소분류</option>
-        </select>
-      </div>
-      <div class="space-y-1">
-        <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">정렬 기준</label>
-        <select id="solve-sort-order" onchange="initSolvePage(false)"
-          class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
-          <option value="oldest">오래된순</option>
-          <option value="newest">최근순</option>
-          <option value="accuracy">정답률 저조순</option>
-        </select>
+    <!-- 필터 및 정렬 영역 (v모바일최적화: 접기/펴기 추가) -->
+    <div class="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+      <button onclick="toggleSolveFilterArea()" class="w-full flex justify-between items-center px-4 py-3 bg-bg/50 hover:bg-bg transition-colors">
+        <div class="flex items-center text-sm font-bold text-secondary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+          문제 필터 및 정렬
+        </div>
+        <svg id="solve-filter-arrow" class="w-4 h-4 text-muted transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      
+      <div id="solve-filter-content" class="hidden max-h-0 transition-all duration-300 ease-in-out border-t border-border">
+        <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-bg/30">
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">대분류</label>
+            <select id="solve-filter-major" onchange="onSolveMajorChange()"
+              class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
+              <option value="">전체 대분류</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">소분류</label>
+            <select id="solve-filter-minor" onchange="onSolveMinorChange()"
+              class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
+              <option value="">전체 소분류</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold text-muted uppercase tracking-tight ml-1">정렬 기준</label>
+            <select id="solve-sort-order" onchange="initSolvePage(false)"
+              class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none">
+              <option value="oldest">오래된순</option>
+              <option value="newest">최근순</option>
+              <option value="accuracy">정답률 저조순</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -51,36 +63,43 @@
         <!-- JS에서 문제 유형별 UI 주입 -->
       </div>
 
-      <!-- 액션 버튼 -->
-      <div class="mt-6 flex justify-between items-center border-t border-border pt-6">
-        <button id="hint-btn" onclick="toggleSolveHint()"
-          class="text-xs font-bold text-accent hover:underline flex items-center">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-            </path>
-          </svg>
-          힌트(해설) 보기
-        </button>
-        <button id="scratchpad-toggle-btn" onclick="toggleScratchpad()"
-          class="text-xs font-bold text-secondary hover:text-accent flex items-center bg-bg px-3 py-1.5 rounded-lg border border-border transition-colors">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-          </svg>
-          계산장 열기
-        </button>
-        <div class="flex space-x-3">
-          <button id="prev-question-btn" onclick="loadPrevQuestion()"
-            class="bg-bg text-secondary font-bold py-2.5 px-6 rounded-lg border border-border hover:bg-muted/10 transition-colors disabled:opacity-30">
-            이전 문제
-          </button>
+      <!-- 액션 버튼 (v모바일최적화: 2라인 레이아웃) -->
+      <div class="mt-6 border-t border-border pt-6 space-y-3">
+        <!-- 윗라인: 이전/다음 및 정답제출 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-1 space-x-2">
+            <button id="prev-question-btn" onclick="loadPrevQuestion()"
+              class="flex-1 bg-bg text-secondary font-bold py-2.5 rounded-lg border border-border hover:bg-muted/10 transition-colors disabled:opacity-30 text-sm">
+              이전
+            </button>
+            <button id="next-question-btn" onclick="loadNextQuestion()"
+              class="flex-1 bg-secondary text-white font-bold py-2.5 rounded-lg shadow-sm border border-secondary hover:bg-secondary/90 transition-colors disabled:opacity-30 text-sm">
+              다음
+            </button>
+          </div>
           <button id="submit-answer-btn" onclick="handleSolveSubmission()"
-            class="bg-accent text-white font-bold py-2.5 px-8 rounded-lg shadow-sm disabled:opacity-50">
+            class="flex-1 sm:flex-initial bg-accent text-white font-bold py-2.5 px-8 rounded-lg shadow-sm disabled:opacity-50 text-base">
             정답 제출
           </button>
-          <button id="next-question-btn" onclick="loadNextQuestion()"
-            class="bg-secondary text-white font-bold py-2.5 px-6 rounded-lg shadow-sm border border-secondary hover:bg-secondary/90 transition-colors disabled:opacity-30">
-            다음 문제
+        </div>
+
+        <!-- 아래라인: 힌트 및 계산장 -->
+        <div class="flex space-x-2">
+          <button id="hint-btn" onclick="toggleSolveHint()"
+            class="flex-1 bg-bg text-accent font-bold py-2 rounded-lg border border-accent/20 hover:bg-accent/5 transition-all flex items-center justify-center text-xs">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+              </path>
+            </svg>
+            힌트/해설
+          </button>
+          <button id="scratchpad-toggle-btn" onclick="toggleScratchpad()"
+            class="flex-1 bg-bg text-secondary font-bold py-2 rounded-lg border border-border hover:text-accent hover:border-accent/40 transition-all flex items-center justify-center text-xs">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+            계산장
           </button>
         </div>
       </div>
@@ -108,6 +127,17 @@
           <!-- 해설 렌더링 -->
         </div>
         <div id="solve-explanation-edit-area" class="hidden space-y-3">
+          <div class="flex justify-between items-end mb-1">
+            <span class="text-[10px] font-bold text-muted uppercase tracking-tight">수정 중...</span>
+            <button type="button" onclick="openMarkdownPreview('solve-explanation-textarea')"
+              class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+              미리보기
+            </button>
+          </div>
           <textarea id="solve-explanation-textarea" rows="8" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface focus:ring-1 focus:ring-accent outline-none font-mono" placeholder="해설을 입력하세요 (마크다운 지원)"></textarea>
           <div class="flex justify-end space-x-2">
             <button onclick="toggleSolveExplanationEdit(false)" class="text-xs font-bold text-muted px-3 py-1.5 rounded-lg border border-border hover:bg-bg">취소</button>
@@ -122,16 +152,37 @@
   <div id="scratchpad-container" class="hidden opacity-0">
     <canvas id="scratchpad-canvas"></canvas>
     <div id="scratchpad-controls">
+      <!-- 드로잉 모드 -->
       <button onclick="setScratchpadMode('draw')" id="sp-draw-btn" class="scratchpad-btn active" title="그리기">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
       </button>
       <button onclick="setScratchpadMode('erase')" id="sp-erase-btn" class="scratchpad-btn" title="지우개">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
       </button>
+      
+      <div class="sp-thickness-indicator"></div>
+
+      <!-- 색상 선택 -->
+      <div class="sp-color-btn-group flex flex-col gap-3 py-1">
+        <div onclick="setScratchpadColor('')" id="sp-color-default" class="sp-color-btn active" style="background: var(--accent);" title="기본색"></div>
+        <div onclick="setScratchpadColor('#EF4444')" id="sp-color-red" class="sp-color-btn" style="background: #EF4444;" title="빨강"></div>
+        <div onclick="setScratchpadColor('#3B82F6')" id="sp-color-blue" class="sp-color-btn" style="background: #3B82F6;" title="파랑"></div>
+        <div onclick="setScratchpadColor('#F59E0B')" id="sp-color-yellow" class="sp-color-btn" style="background: #F59E0B;" title="노랑"></div>
+      </div>
+
+      <div class="sp-thickness-indicator"></div>
+
+      <!-- 두께 조절 (회전된 슬라이더) -->
+      <div class="thickness-slider-container flex flex-col items-center">
+        <span class="text-[10px] font-bold text-muted mb-1">두께</span>
+        <input type="range" min="1" max="20" value="2" class="thickness-slider" oninput="setScratchpadThickness(this.value)">
+      </div>
+
+      <div class="sp-thickness-indicator"></div>
+
       <button onclick="clearScratchpad()" class="scratchpad-btn" title="모두 지우기">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
       </button>
-      <hr class="border-border">
       <button onclick="toggleScratchpad()" class="scratchpad-btn bg-red-500/10 text-red-500" title="닫기">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
@@ -153,6 +204,32 @@
   var lastX = 0;
   var lastY = 0;
   var spMode = 'draw'; // 'draw' | 'erase'
+  var spColor = '';    // 기본색 (자동 연동)
+  var spThickness = 2; // 기본 두께
+
+  /**
+   * 필터 영역 토글 (v모바일최적화)
+   */
+  function toggleSolveFilterArea() {
+    var content = document.getElementById('solve-filter-content');
+    var arrow = document.getElementById('solve-filter-arrow');
+    if (!content) return;
+    
+    var isHidden = content.classList.contains('hidden');
+    if (isHidden) {
+      content.classList.remove('hidden');
+      setTimeout(function() {
+        content.style.maxHeight = '500px';
+        arrow.style.transform = 'rotate(180deg)';
+      }, 10);
+    } else {
+      content.style.maxHeight = '0';
+      arrow.style.transform = 'rotate(0)';
+      setTimeout(function() {
+        content.classList.add('hidden');
+      }, 300);
+    }
+  }
 
   function initSolvePage(forceRefresh) {
     var majorFilter = document.getElementById('solve-filter-major');
@@ -518,6 +595,101 @@
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  /**
+   * 해설 수정 모드 토글 (v추가)
+   */
+  function toggleSolveExplanationEdit(isEdit) {
+    var viewArea = document.getElementById('solve-explanation-content');
+    var editArea = document.getElementById('solve-explanation-edit-area');
+    var editBtn = document.getElementById('edit-explanation-btn');
+    var textarea = document.getElementById('solve-explanation-textarea');
+    
+    if (!viewArea || !editArea || !editBtn) return;
+    
+    if (isEdit) {
+      var q = solveQuestions[currentSolveIndex];
+      textarea.value = q.hint_explanation || '';
+      viewArea.classList.add('hidden');
+      editArea.classList.remove('hidden');
+      editBtn.classList.add('hidden');
+    } else {
+      viewArea.classList.remove('hidden');
+      editArea.classList.add('hidden');
+      editBtn.classList.remove('hidden');
+      if (typeof closeMarkdownPreview === 'function') closeMarkdownPreview(); // 수정 종료 시 미리보기 닫기 (v추가)
+    }
+  }
+
+  /**
+   * 수정한 해설 서버 저장 (v추가)
+   */
+  function saveSolveExplanation() {
+    var q = solveQuestions[currentSolveIndex];
+    if (!q) return;
+    
+    var newText = document.getElementById('solve-explanation-textarea').value;
+    var saveBtn = document.getElementById('save-explanation-btn');
+    
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerText = '저장 중...';
+    }
+    
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerText = '저장하기';
+        }
+        
+        if (response && response.status === 'success') {
+          // 로컬 데이터 업데이트
+          q.hint_explanation = newText;
+          // 전역 올데이터 업데이트 (v53/v56 연동)
+          if (typeof allQuestions !== 'undefined') {
+            var globalQ = allQuestions.find(function(item) { return item.id === q.id; });
+            if (globalQ) globalQ.hint_explanation = newText;
+          }
+          
+          alert('해설이 성공적으로 수정되었습니다.');
+          toggleSolveExplanationEdit(false);
+          
+          // 수정한 내용 즉시 렌더링 반영
+          var explanationContent = document.getElementById('solve-explanation-content');
+          var rendered = newText || '해설이 등록되지 않았습니다.';
+          if (typeof marked !== 'undefined') {
+            rendered = marked.parse(rendered.replace(/'''/g, '```'));
+          }
+          explanationContent.innerHTML = rendered;
+        } else {
+          alert('저장 실패: ' + (response ? response.message : '서버 오류'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerText = '저장하기';
+        }
+        alert('서버 통신 오류가 발생했습니다.');
+      })
+      .router({
+        action: 'updateQuestion',
+        payload: {
+          id: q.id,
+          major_subject: q.major_subject,
+          minor_subject: q.minor_subject,
+          question_title: q.question_title,
+          content: q.content,
+          question_type: q.question_type,
+          options: q.options,
+          answer: q.answer,
+          image_url: q.image_url,
+          image_position: q.image_position,
+          hint_explanation: newText 
+        }
+      });
+  }
+
   function toggleSolveHint() {
     var q = solveQuestions[currentSolveIndex];
     if (!q) return;
@@ -638,11 +810,11 @@
       
       if (spMode === 'erase') {
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = 20;
+        ctx.lineWidth = spThickness * 5; // 지우개는 더 두껍게
       } else {
         ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = document.documentElement.classList.contains('dark') ? '#8AB4F8' : '#1A73E8'; // 액센트 컬러 연동
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = spColor || (document.documentElement.classList.contains('dark') ? '#8AB4F8' : '#1A73E8');
+        ctx.lineWidth = spThickness;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
       }
@@ -706,6 +878,23 @@
     spMode = mode;
     document.getElementById('sp-draw-btn').classList.toggle('active', mode === 'draw');
     document.getElementById('sp-erase-btn').classList.toggle('active', mode === 'erase');
+  }
+
+  function setScratchpadColor(color) {
+    spColor = color;
+    // UI 업데이트
+    document.querySelectorAll('.sp-color-btn').forEach(function(el) { el.classList.remove('active'); });
+    if (color === '') document.getElementById('sp-color-default').classList.add('active');
+    else if (color === '#EF4444') document.getElementById('sp-color-red').classList.add('active');
+    else if (color === '#3B82F6') document.getElementById('sp-color-blue').classList.add('active');
+    else if (color === '#F59E0B') document.getElementById('sp-color-yellow').classList.add('active');
+    
+    // 그리기 모드로 자동 전환
+    setScratchpadMode('draw');
+  }
+
+  function setScratchpadThickness(val) {
+    spThickness = parseInt(val);
   }
 
   function clearScratchpad() {

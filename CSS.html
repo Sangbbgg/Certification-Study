@@ -240,6 +240,45 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
+  /* 사이드바 접힘 상태 스타일 (v추가) */
+  @media (min-width: 750px) {
+    #sidebar.collapsed-sidebar {
+      width: 72px !important;
+    }
+    
+    #sidebar.collapsed-sidebar .sidebar-title {
+      display: none;
+    }
+    
+    /* 헤더 버튼 세로 배치 및 정렬 보정 (v수정) */
+    #sidebar.collapsed-sidebar #sidebar-header {
+      flex-direction: column;
+      height: auto;
+      padding: 1rem 0;
+      gap: 0.75rem;
+    }
+    
+    #sidebar.collapsed-sidebar #sidebar-toggle,
+    #sidebar.collapsed-sidebar #theme-toggle {
+      margin: 0;
+      padding: 0.5rem;
+    }
+    
+    #sidebar.collapsed-sidebar .tab-btn span {
+      display: none;
+    }
+    
+    #sidebar.collapsed-sidebar .tab-btn svg {
+      margin-right: 0;
+    }
+    
+    #sidebar.collapsed-sidebar .tab-btn {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
   /* 다크모드 토글 버튼 애니메이션 */
   #theme-toggle svg {
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -310,18 +349,92 @@
   }
 
   #scratchpad-controls {
-    position: absolute;
-    bottom: 2rem;
-    right: 2rem;
+    position: fixed;
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
     background-color: var(--surface);
     border: 1px solid var(--border);
-    padding: 0.75rem;
-    border-radius: 1rem;
-    box-shadow: var(--card-shadow);
+    padding: 0.85rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.75rem;
     pointer-events: auto;
+    z-index: 10001;
+    transition: all 0.3s ease;
+  }
+
+  /* 모바일 및 폴드 펼침 최적화: 1024px 미만에서 하단 가로 배치 */
+  @media (max-width: 1023px) {
+    #scratchpad-controls {
+      top: auto;
+      bottom: 5.5rem; /* 하단 내비게이션 바 위쪽 */
+      right: 50%;
+      transform: translateX(50%);
+      flex-direction: row;
+      padding: 0.6rem 1rem;
+      border-radius: 3rem;
+      gap: 0.8rem;
+      width: auto;
+      max-width: 95vw;
+    }
+    
+    .sp-thickness-indicator {
+      width: 1px !important;
+      height: 20px !important;
+      margin: 0 4px !important;
+    }
+
+    .sp-color-btn-group {
+       flex-direction: row !important;
+       gap: 0.5rem !important;
+    }
+
+    .thickness-slider-container {
+      flex-direction: row !important;
+      margin-left: 0.5rem;
+    }
+
+    .thickness-slider {
+      width: 60px !important;
+      height: 4px !important;
+      margin: 0 0 0 8px !important;
+      -webkit-appearance: none !important;
+      transform: none !important;
+    }
+  }
+
+  .sp-color-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: transform 0.2s;
+    cursor: pointer;
+  }
+  .sp-color-btn:hover { transform: scale(1.2); }
+  .sp-color-btn.active { border-color: var(--text); transform: scale(1.1); }
+
+  .sp-thickness-indicator {
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+
+  .thickness-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
   }
 
   .scratchpad-btn {

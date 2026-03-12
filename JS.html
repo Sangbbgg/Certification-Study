@@ -46,6 +46,15 @@
       } else if (pageId === 'solve') {
         if (typeof initSolvePage === 'function') initSolvePage();
       }
+      
+      // 스크립트 강제 실행 (v추가: 템플릿 내 스크립트 대응)
+      const scripts = mainContainer.querySelectorAll('script');
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
     } else {
       mainContainer.innerHTML = pages[pageId] || '<p class="text-center text-muted my-10">해당 페이지를 찾을 수 없습니다.</p>';
     }
@@ -110,6 +119,15 @@
     console.log('[DEBUG] Theme toggled:', isDark ? 'Dark' : 'Light');
   }
 
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    const isCollapsed = sidebar.classList.toggle('collapsed-sidebar');
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+    console.log('[DEBUG] Sidebar toggled. Collapsed:', isCollapsed);
+  }
+
   function applySavedTheme() {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -118,6 +136,13 @@
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+    }
+    
+    // 사이드바 상태 복구 (v추가)
+    const sidebar = document.getElementById('sidebar');
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (sidebar && sidebarCollapsed) {
+      sidebar.classList.add('collapsed-sidebar');
     }
   }
 

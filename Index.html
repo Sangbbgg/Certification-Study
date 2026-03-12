@@ -39,13 +39,16 @@
 </head>
 <body class="bg-bg text-text font-sans h-screen flex flex-col fold:flex-row overflow-hidden transition-colors duration-300">
   
-  <!-- GNB 영역 (v68 다크모드 연동) -->
-  <aside class="flex-shrink-0 bg-surface border-border flex flex-col fold:border-r fold:w-64 lg:w-72 shadow-sm fold:shadow-none z-20 transition-all duration-300">
+  <!-- GNB 영역 (v68 다크모드 연동, v사이드바 토글 추가) -->
+  <aside id="sidebar" class="flex-shrink-0 bg-surface border-border flex flex-col fold:border-r fold:w-64 lg:w-72 shadow-sm fold:shadow-none z-20 transition-all duration-300 ease-in-out">
     
-    <!-- 해더/심볼 부분 (v68 토글 버튼 추가) -->
-    <div class="h-14 fold:h-16 flex items-center justify-between px-4 fold:px-6 border-b border-border bg-surface sticky top-0">
-      <h1 class="text-base fold:text-lg font-bold text-primary tracking-tight">학습 보조 시스템</h1>
-      <button id="theme-toggle" onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-bg transition-colors focus:outline-none" aria-label="테마 전환">
+    <!-- 해더/심볼 부분 (v68 토글 버튼 추가, v사이드바 토글 추가) -->
+    <div id="sidebar-header" class="h-14 fold:h-16 flex items-center px-4 fold:px-6 border-b border-border bg-surface sticky top-0 overflow-hidden whitespace-nowrap transition-all duration-300">
+      <button id="sidebar-toggle" onclick="toggleSidebar()" class="hidden fold:flex p-2 mr-2 rounded-lg hover:bg-bg transition-colors focus:outline-none" aria-label="사이드바 토글">
+        <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      <h1 class="sidebar-title text-base fold:text-lg font-bold text-primary tracking-tight flex-1 truncate">학습 보조 시스템</h1>
+      <button id="theme-toggle" onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-bg transition-colors focus:outline-none shrink-0" aria-label="테마 전환">
         <!-- Moon Icon (Light Mode 에서 보임) -->
         <svg id="moon-icon" class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         <!-- Sun Icon (Dark Mode 에서 보임) -->
