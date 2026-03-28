@@ -27,3 +27,6 @@
 - **함수 명칭:** 기능/페이지별 접두어(예: `initSolvePage`, `renderAnalyzeList`)를 사용하여 충돌을 방지합니다.
 - **파일 모듈화:** `Index`, `CSS`, `JS`, `Page_XXX` 단위로 파일을 분리하여 유지보수성을 높입니다.
 - **캐시 우선:** 데이터 조회 시 전역 메모리 캐시(`allQuestions`)를 먼저 참조하고 필요한 경우에만 서버와 동기화합니다.
+
+## 6. 터미널 및 작업 환경 (Terminal & Environment)
+- **PowerShell 구문:** Windows/PowerShell 환경에서 여러 명령어를 연속 실행할 때 `&&`는 지원되지 않을 수 있으므로 `;`를 사용합니다. (예: `git add . ; git commit -m "message"`)
