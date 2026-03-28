@@ -1,0 +1,23 @@
+{
+  "name": "Certification Study Assistant",
+  "description": "자격증 학습 시스템(GAS + Supabase) 개발을 위한 전문 스킬 및 워크플로우를 제공합니다.",
+  "version": "1.0.0",
+  "author": "Antigravity",
+  "rules": [
+    "./rules/global_rules.md"
+  ],
+  "skills": [
+    "./skills/problem_management",
+    "./skills/learning_analysis",
+    "./skills/problem_solving",
+    "./skills/data_optimization"
+  ],
+  "workflows": [
+    "./workflows/properties_setup.md",
+    "./workflows/git_clasp_setup.md",
+    "./workflows/sheet_logger_setup.md",
+    "./workflows/supabase_rest_setup.md",
+    "./workflows/gas_router_setup.md",
+    "./workflows/frontend_skeleton_setup.md"
+  ]
+}
