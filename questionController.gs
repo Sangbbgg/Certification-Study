@@ -13,8 +13,6 @@ function uploadImageToDrive(base64Data, filename) {
     
     const folder = DriveApp.getFolderById(folderId);
     
-    // Base64 디코딩
-    // 클라이언트에서 'data:image/png;base64,...' 형태로 줬을 경우를 대비해 본문만 추출
     let dataToDecode = base64Data;
     if (base64Data.indexOf("base64,") !== -1) {
       dataToDecode = base64Data.split("base64,")[1];
@@ -22,7 +20,6 @@ function uploadImageToDrive(base64Data, filename) {
     
     const decodedBlob = Utilities.base64Decode(dataToDecode);
     
-    // 파일명 확장자를 통해 MimeType 유추 (기본 PNG)
     let mimeType = MimeType.PNG;
     if (filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg')) {
       mimeType = MimeType.JPEG;
@@ -31,10 +28,8 @@ function uploadImageToDrive(base64Data, filename) {
     const blob = Utilities.newBlob(decodedBlob, mimeType, filename);
     const file = folder.createFile(blob);
     
-    // 누구나 읽을 수 있도록 권한 설정 (마크다운 렌더링에 필요)
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
-    // 파일 URL 반환 (가장 안정적인 직접 링크 형식)
     return `https://lh3.googleusercontent.com/d/${file.getId()}`;
   } catch (error) {
     if (typeof sheetLogger !== 'undefined') {
@@ -43,6 +38,101 @@ function uploadImageToDrive(base64Data, filename) {
       console.error('uploadImageToDrive', error);
     }
     throw new Error('드라이브 이미지 업로드 실패: ' + error.message);
+  }
+}
+
+/**
+ * 과목 목록 조회 (대분류 → 소분류 트리)
+ */
+function getSubjects() {
+  try {
+    // subjects 테이블 우선 조회, 없으면 questions 테이블에서 distinct 추출
+    let endpoint = '/rest/v1/subjects?select=major,minor&order=major,minor';
+    let response = supabaseFetch(endpoint, 'GET');
+
+    let rows = [];
+    if (response.success && response.data && response.data.length > 0) {
+      rows = response.data;
+    } else {
+      // fallback: questions 테이블에서 직접 추출
+      const qResp = supabaseFetch(
+        '/rest/v1/questions?select=major_subject,minor_subject&order=major_subject,minor_subject',
+        'GET'
+      );
+      if (!qResp.success) throw new Error('과목 목록 조회 실패');
+      const seen = new Set();
+      (qResp.data || []).forEach(q => {
+        const key = q.major_subject + '|||' + q.minor_subject;
+        if (!seen.has(key)) {
+          seen.add(key);
+          rows.push({ major: q.major_subject, minor: q.minor_subject });
+        }
+      });
+    }
+
+    // major → [minors] 그룹핑
+    const grouped = {};
+    rows.forEach(r => {
+      if (!grouped[r.major]) grouped[r.major] = [];
+      grouped[r.major].push(r.minor);
+    });
+
+    return { status: 'success', data: grouped };
+  } catch (error) {
+    Logger.log('[ERROR] getSubjects: ' + error.message);
+    return { status: 'error', message: error.message };
+  }
+}
+
+/**
+ * 과목별 통계 조회 (subject_stats 뷰 활용)
+ */
+function getSubjectStats() {
+  try {
+    let response = supabaseFetch('/rest/v1/subject_stats?select=*', 'GET');
+
+    if (!response.success || !response.data || response.data.length === 0) {
+      // fallback: questions 테이블에서 집계
+      const qResp = supabaseFetch(
+        '/rest/v1/questions?select=major_subject,minor_subject,question_type,total_attempts,accuracy_rate',
+        'GET'
+      );
+      if (!qResp.success) throw new Error('통계 조회 실패');
+
+      const statsMap = {};
+      (qResp.data || []).forEach(q => {
+        const key = q.major_subject + '|||' + q.minor_subject;
+        if (!statsMap[key]) {
+          statsMap[key] = {
+            major_subject: q.major_subject,
+            minor_subject: q.minor_subject,
+            total_questions: 0,
+            total_attempts: 0,
+            avg_accuracy: 0,
+            accuracy_sum: 0,
+            accuracy_count: 0
+          };
+        }
+        statsMap[key].total_questions++;
+        statsMap[key].total_attempts += (q.total_attempts || 0);
+        if (q.accuracy_rate !== null) {
+          statsMap[key].accuracy_sum += q.accuracy_rate;
+          statsMap[key].accuracy_count++;
+        }
+      });
+
+      const stats = Object.values(statsMap).map(s => ({
+        ...s,
+        avg_accuracy: s.accuracy_count > 0 ? Math.round(s.accuracy_sum / s.accuracy_count) : null
+      }));
+
+      return { status: 'success', data: stats };
+    }
+
+    return { status: 'success', data: response.data };
+  } catch (error) {
+    Logger.log('[ERROR] getSubjectStats: ' + error.message);
+    return { status: 'error', message: error.message };
   }
 }
 
@@ -65,26 +155,22 @@ function createQuestion(payload) {
       image_filename
     } = payload;
     
-    // 필수 데이터 검증
     if (!major_subject || !minor_subject || !question_title || !content || !question_type || !answer) {
       throw new Error("필수 입력 항목이 누락되었습니다.");
     }
     
-    // 새로운 문제의 고유 번호 할당
     const newQuestionId = Utilities.getUuid();
     
     let finalContent = content;
     let imageUrl = null;
     let imagePosition = payload.image_position || 'BOTTOM';
     
-    // 이미지 파일이 전송된 경우 드라이브에 업로드
     if (base64_image && image_filename) {
       const extension = image_filename.split('.').pop() || 'png';
       const uniqueFilename = `${newQuestionId}.${extension}`;
       imageUrl = uploadImageToDrive(base64_image, uniqueFilename);
     }
     
-    // DB 저장용 객체 생성 (이미지 컬럼 분리)
     const questionObj = {
       id: newQuestionId,
       major_subject,
@@ -99,13 +185,10 @@ function createQuestion(payload) {
       answer
     };
     
-    // [LOG] 문제 생성 요청 페이로드 확인 (이미지 데이터 제외하고 로그 기록)
     Logger.log(`[DEBUG] createQuestion Payload: ID=${newQuestionId}, Title=${question_title}, Position=${imagePosition}`);
     
-    // DB INSERT 호출 (REST API)
     const response = supabaseFetch('/rest/v1/questions', 'POST', questionObj);
     
-    // [LOG] 서버 응답 확인
     Logger.log('[DEBUG] Supabase Response: ' + JSON.stringify(response));
     
     if (!response.success) {
@@ -113,7 +196,6 @@ function createQuestion(payload) {
       throw new Error('Supabase 저장 오류: ' + response.error);
     }
     
-    // 캐시 무효화
     clearSupabaseCache();
     Logger.log('[DEBUG] Server cache invalidated for list');
     
@@ -128,18 +210,35 @@ function createQuestion(payload) {
 }
 
 /**
- * 분석 데이터를 포함한 문제 목록 조회
- * @param {boolean} sync - true일 경우 전체 통계를 재계산하여 DB를 최신화함 (v58)
+ * 분석 데이터를 포함한 문제 목록 조회 (필터 지원 추가)
+ * @param {boolean|object} syncOrFilters - true면 통계 동기화, object면 필터 객체
  */
-function getQuestionsWithAnalytics(sync = false) {
+function getQuestionsWithAnalytics(syncOrFilters) {
   try {
-    // 0. 상세 동기화가 필요한 경우 실행 (분석 페이지 진입 시)
+    let sync = false;
+    let filters = {};
+
+    if (syncOrFilters === true) {
+      sync = true;
+    } else if (typeof syncOrFilters === 'object' && syncOrFilters !== null) {
+      sync    = syncOrFilters.sync    || false;
+      filters = syncOrFilters;
+    }
+
     if (sync === true) {
       syncAllStats();
     }
 
-    // 1. 필요한 모든 컬럼을 단일 쿼리로 조회
-    const endpoint = `/rest/v1/questions?select=*&order=created_at.desc`;
+    let endpoint = '/rest/v1/questions?select=*&order=minor_subject,question_title';
+
+    if (filters.major_subject) endpoint += `&major_subject=eq.${encodeURIComponent(filters.major_subject)}`;
+    if (filters.minor_subject) endpoint += `&minor_subject=eq.${encodeURIComponent(filters.minor_subject)}`;
+    if (filters.question_type) endpoint += `&question_type=eq.${encodeURIComponent(filters.question_type)}`;
+
+    const limit  = filters.limit  || 200;
+    const offset = filters.offset || 0;
+    endpoint += `&limit=${limit}&offset=${offset}`;
+
     const response = supabaseFetch(endpoint, 'GET');
     if (!response.success) throw new Error('데이터 조회 실패: ' + response.error);
 
@@ -154,13 +253,12 @@ function getQuestionsWithAnalytics(sync = false) {
 }
 
 /**
- * 모든 문제의 풀이 이력을 기반으로 통계(정답률 등)를 일괄 업데이트 (v58)
+ * 모든 문제의 풀이 이력을 기반으로 통계를 일괄 업데이트
  */
 function syncAllStats() {
   try {
     Logger.log('[DEBUG] syncAllStats Start');
     
-    // 1. 모든 풀이 이력 가져오기 (가장 최근 일시를 위해 created_at 추가)
     const hResp = supabaseFetch('/rest/v1/learning_history?select=question_id,is_correct,created_at', 'GET');
     if (!hResp.success) return;
     
@@ -174,14 +272,12 @@ function syncAllStats() {
       statsMap[h.question_id].total++;
       if (h.is_correct) statsMap[h.question_id].correct++;
       
-      // 최신 풀이 일시 갱신
       const solveTime = new Date(h.created_at).getTime();
       if (!statsMap[h.question_id].last_solved || solveTime > new Date(statsMap[h.question_id].last_solved).getTime()) {
         statsMap[h.question_id].last_solved = h.created_at;
       }
     });
     
-    // 2. 각 문제별로 통계 업데이트
     for (const qId in statsMap) {
       const s = statsMap[qId];
       const accuracy = Math.round((s.correct / s.total) * 100);
@@ -218,17 +314,14 @@ function updateQuestion(payload) {
     let finalImagePosition = payload.image_position || 'TOP';
 
     if (payload.remove_image === true) {
-      finalImagePosition = 'TOP'; // 이미지 삭제 시 포지션도 기본값으로 리셋
+      finalImagePosition = 'TOP';
     }
 
-    // [LOG] 수정 요청 시작
     Logger.log(`[DEBUG] updateQuestion Start - ID: ${id}, Position: ${finalImagePosition}`);
 
-    // 0. 기존 문제 정보 조회 (이미지 삭제 및 유지를 위함)
     const oldQResp = supabaseFetch(`/rest/v1/questions?id=eq.${id}&select=content,image_url`, 'GET');
     const oldData = (oldQResp.success && oldQResp.data.length > 0) ? oldQResp.data[0] : null;
 
-    // 1. 이미지 처리
     if (base64_image && image_filename) {
       if (oldData && oldData.image_url) {
         const oldIdMatch = oldData.image_url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
@@ -265,12 +358,10 @@ function updateQuestion(payload) {
       answer
     };
 
-    // [LOG] Supabase PATCH 요청 데이터
     Logger.log('[DEBUG] Update Payload: ' + JSON.stringify(updatedData));
 
     const response = supabaseFetch(`/rest/v1/questions?id=eq.${id}`, 'PATCH', updatedData);
     
-    // [LOG] 서버 응답 확인
     Logger.log('[DEBUG] Update Supabase Response: ' + JSON.stringify(response));
 
     if (!response.success) throw new Error('Supabase 업데이트 오류: ' + response.error);
@@ -289,7 +380,6 @@ function updateQuestion(payload) {
  */
 function deleteQuestion(id) {
   try {
-    // 1. 이미지 삭제를 위해 문제 정보 조회
     const qResp = supabaseFetch(`/rest/v1/questions?id=eq.${id}&select=image_url`, 'GET');
     if (qResp.success && qResp.data.length > 0) {
       const imageUrl = qResp.data[0].image_url;
@@ -301,10 +391,8 @@ function deleteQuestion(id) {
       }
     }
 
-    // 2. 관련 이력 삭제 (Supabase에서 CASCADE 설정이 안되어 있을 경우 수동 삭제)
     supabaseFetch(`/rest/v1/learning_history?question_id=eq.${id}`, 'DELETE');
 
-    // 3. 문제 삭제
     const response = supabaseFetch(`/rest/v1/questions?id=eq.${id}`, 'DELETE');
     if (!response.success) throw new Error('Supabase 삭제 오류: ' + response.error);
 
@@ -316,22 +404,41 @@ function deleteQuestion(id) {
 }
 
 /**
- * 문제풀이용 문제 추출 (최대 10개 랜덤)
+ * 문제풀이용 문제 추출 (과목 필터 + 학습 모드 지원)
+ * @param {Object} filters - { major_subject, minor_subject, question_type, count, mode }
+ *   mode: 'random'(기본) | 'weak'(약점집중) | 'order'(순서대로)
  */
-function getQuestionsForSolve(filters = {}) {
+function getQuestionsForSolve(filters) {
+  filters = filters || {};
   try {
+    const count = filters.count || 10;
+    const mode  = filters.mode  || 'random';
+
     let endpoint = '/rest/v1/questions?select=*';
     if (filters.major_subject) endpoint += `&major_subject=eq.${encodeURIComponent(filters.major_subject)}`;
     if (filters.minor_subject) endpoint += `&minor_subject=eq.${encodeURIComponent(filters.minor_subject)}`;
-    
+    if (filters.question_type) endpoint += `&question_type=eq.${encodeURIComponent(filters.question_type)}`;
+
+    if (mode === 'weak') {
+      // 약점 모드: 풀어본 문제 중 정답률 낮은 순
+      endpoint += `&total_attempts=gt.0&order=accuracy_rate.asc&limit=${count * 3}`;
+    } else if (mode === 'order') {
+      endpoint += `&order=minor_subject.asc,question_title.asc&limit=${count}`;
+    } else {
+      // random: 넉넉하게 가져와서 셔플
+      endpoint += `&limit=${count * 5}`;
+    }
+
     const response = supabaseFetch(endpoint, 'GET');
     if (!response.success) throw new Error('문제 로드 실패: ' + response.error);
 
-    let questions = response.data;
-    // 단순 랜덤 셔플
-    questions.sort(() => Math.random() - 0.5);
-    // 최대 10개만 반환
-    return { status: 'success', data: questions.slice(0, 10) };
+    let questions = response.data || [];
+
+    if (mode !== 'order') {
+      questions.sort(() => Math.random() - 0.5);
+    }
+
+    return { status: 'success', data: questions.slice(0, count) };
   } catch (error) {
     if (typeof sheetLogger !== 'undefined') sheetLogger.error('getQuestionsForSolve', error.message, error.stack);
     return { status: 'error', message: error.message };

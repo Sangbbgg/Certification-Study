@@ -10,7 +10,6 @@ function doPost(e) {
       throw new Error('유효하지 않은 요청(request format)입니다.');
     }
     
-    // 중앙 라우터로 전달 (router 함수가 예외처리 및 응답 포맷을 담당)
     const result = router(request);
     
     return ContentService.createTextOutput(JSON.stringify(result))
@@ -25,8 +24,61 @@ function doPost(e) {
 }
 
 /**
- * 프론트엔드 통신 및 중앙 제어 라우터 기능
- * 외부 google.script.run.router(request) 형태로 호출됩니다.
+ * GET 요청 핸들러 (웹앱 URL 직접 호출용)
+ */
+function doGet(e) {
+  try {
+    const action = e.parameter.action;
+    if (!action) {
+      // 기본: 메인 페이지 반환
+      return HtmlService.createHtmlOutputFromFile('Index')
+        .setTitle('정보처리기사 실기')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+
+    const params = e.parameter;
+    let result;
+
+    switch (action) {
+      case 'getSubjects':
+        result = getSubjects();
+        break;
+      case 'getSubjectStats':
+        result = getSubjectStats();
+        break;
+      case 'getQuestionsForSolve':
+        result = getQuestionsForSolve({
+          major_subject:  params.major_subject,
+          minor_subject:  params.minor_subject,
+          question_type:  params.question_type,
+          count:  params.count  ? parseInt(params.count) : 10,
+          mode:   params.mode   || 'random'
+        });
+        break;
+      case 'getQuestionsWithAnalytics':
+        result = getQuestionsWithAnalytics({
+          major_subject:  params.major_subject,
+          minor_subject:  params.minor_subject,
+          question_type:  params.question_type,
+          limit:  params.limit  ? parseInt(params.limit)  : 200,
+          offset: params.offset ? parseInt(params.offset) : 0
+        });
+        break;
+      default:
+        result = { status: 'error', message: '알 수 없는 액션: ' + action };
+    }
+
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * 프론트엔드 통신 및 중앙 제어 라우터
+ * google.script.run.router(request) 형태로 호출됩니다.
  * @param {object} request - {action: "...", payload: {...}} 형태의 요청 객체
  */
 function router(request) {
@@ -39,15 +91,40 @@ function router(request) {
     let data = null;
     
     switch(action) {
-      // 프론트엔드에서 전달되는 action 값에 따라 각 모듈의 함수 호출 분기 처리
+      // ── 문제 관리
       case 'createQuestion':
         data = createQuestion(request.payload);
         break;
+      case 'updateQuestion':
+        data = updateQuestion(request.payload);
+        break;
+      case 'deleteQuestion':
+        data = deleteQuestion(request.payload && request.payload.id);
+        break;
+      case 'getQuestionsWithAnalytics':
+        data = getQuestionsWithAnalytics(request.payload || false);
+        break;
+
+      // ── 문제 풀기
       case 'getQuestionsForSolve':
         data = getQuestionsForSolve(request.payload || {});
         break;
       case 'submitAnswer':
         data = submitAnswer(request.payload);
+        break;
+
+      // ── 과목 정보
+      case 'getSubjects':
+        data = getSubjects();
+        break;
+      case 'getSubjectStats':
+        data = getSubjectStats();
+        break;
+
+      // ── 동기화
+      case 'syncAllStats':
+        syncAllStats();
+        data = { message: '통계 동기화 완료' };
         break;
         
       default:
