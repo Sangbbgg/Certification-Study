@@ -5,68 +5,89 @@
       <p class="text-sm font-semibold text-secondary mb-5 border-b border-border pb-2">문제 상세 정보 입력</p>
       <form id="question-form" onsubmit="submitQuestion(event)" class="space-y-5">
 
-        <!-- 과목 정보 -->
+        <!-- ① 과목 정보 (드롭다운 + 직접입력 fallback) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="major_subject" class="block text-sm font-medium text-text mb-1">대과목 <span
-                class="text-red-500">*</span></label>
-            <input type="text" id="major_subject" name="major_subject" required
-              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
-              placeholder="예: 정보처리기사">
+            <label class="block text-sm font-medium text-text mb-1">대과목 <span class="text-red-500">*</span></label>
+            <select id="major_subject_sel" onchange="onMajorChange()"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
+              <option value="">-- 불러오는 중... --</option>
+            </select>
+            <input type="text" id="major_subject" name="major_subject"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow mt-1 hidden"
+              placeholder="대과목 직접 입력">
           </div>
           <div>
-            <label for="minor_subject" class="block text-sm font-medium text-text mb-1">소과목 <span
-                class="text-red-500">*</span></label>
-            <input type="text" id="minor_subject" name="minor_subject" required
-              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
-              placeholder="예: 소프트웨어 설계">
+            <label class="block text-sm font-medium text-text mb-1">소과목 <span class="text-red-500">*</span></label>
+            <select id="minor_subject_sel" onchange="onMinorChange()"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
+              <option value="">-- 대과목 먼저 선택 --</option>
+            </select>
+            <input type="text" id="minor_subject" name="minor_subject"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow mt-1 hidden"
+              placeholder="소과목 직접 입력">
           </div>
         </div>
 
-        <!-- 문제 제목 -->
+        <!-- ② 문제 제목 -->
         <div>
-          <label for="question_title" class="block text-sm font-medium text-text mb-1">문제명 <span
-              class="text-red-500">*</span></label>
+          <label for="question_title" class="block text-sm font-medium text-text mb-1">문제명 <span class="text-red-500">*</span></label>
           <input type="text" id="question_title" name="question_title" required
-            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow"
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow"
             placeholder="예: 다음 중 객체지향의 특징이 아닌 것은?">
         </div>
 
-        <!-- 문제 유형 -->
+        <!-- ③ 문제 유형 -->
         <div>
-          <label for="question_type" class="block text-sm font-medium text-text mb-1">문제 유형 <span
-              class="text-red-500">*</span></label>
+          <label for="question_type" class="block text-sm font-medium text-text mb-1">문제 유형 <span class="text-red-500">*</span></label>
           <select id="question_type" name="question_type" onchange="toggleOptionsArea()" required
             class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent bg-surface cursor-pointer transition-shadow">
             <option value="MULTIPLE_CHOICE" selected>객관식 (MULTIPLE_CHOICE)</option>
             <option value="SHORT_ANSWER">단답/서술형 (SHORT_ANSWER)</option>
-            <option value="FIND_AND_FILL">보기에서 찾아넣기 (FIND_AND_FILL)</option>
+            <option value="FIND_AND_FILL">빈칸채우기 (FIND_AND_FILL)</option>
           </select>
         </div>
 
-        <!-- 지문 -->
+        <!-- ④ 문제 내용 — 지문 / 코드 / 쿼리 블록 -->
         <div>
-          <div class="flex justify-between items-end mb-1">
-            <label for="content" class="block text-sm font-medium text-text">지문 (Markdown 지원) <span
-                class="text-red-500">*</span></label>
-            <button type="button" onclick="openMarkdownPreview('content')"
-              class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                </path>
-              </svg>
-              미리보기
-            </button>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm font-medium text-text">문제 내용 <span class="text-red-500">*</span></label>
+            <div class="flex gap-2">
+              <button type="button" onclick="addContentBlock('code')"
+                class="text-[11px] px-2.5 py-1 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-all font-semibold">
+                + 코드 추가
+              </button>
+              <button type="button" onclick="addContentBlock('query')"
+                class="text-[11px] px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-all font-semibold">
+                + 쿼리(SQL) 추가
+              </button>
+            </div>
           </div>
-          <textarea id="content" name="content" rows="4" required
-            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow resize-y"
-            placeholder="문제 지문을 입력하세요 (코드, 설명 등)"></textarea>
+
+          <div id="content-blocks" class="space-y-3">
+            <!-- 기본 지문 블록 (항상 존재) -->
+            <div class="content-block border border-border rounded-xl overflow-hidden" data-type="text">
+              <div class="flex items-center justify-between px-3 py-2 bg-bg border-b border-border">
+                <span class="text-[11px] font-bold text-secondary uppercase tracking-wider">📝 지문</span>
+                <button type="button" onclick="openMarkdownPreview('write-content-main')"
+                  class="text-[10px] text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  미리보기
+                </button>
+              </div>
+              <textarea id="write-content-main" name="content_block" data-type="text" rows="4"
+                class="w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-inset transition-shadow resize-y text-sm leading-relaxed"
+                placeholder="문제 지문을 입력하세요 (Markdown 지원)"></textarea>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-muted mt-2">💡 코드/SQL 블록은 버튼으로 추가하면 미리보기에서 코드 형식으로 표시됩니다.</p>
         </div>
 
-        <!-- 이미지 첨부 및 위치 설정 -->
+        <!-- ⑤ 이미지 첨부 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-bg rounded-lg border border-border">
           <div>
             <label for="imageFile" class="block text-sm font-medium text-text mb-1">첨부 이미지</label>
@@ -83,68 +104,71 @@
           </div>
         </div>
 
-        <!-- 역동적인 보기 영역 (객관식일 때만 표시) -->
-        <div id="options-area" class="space-y-3 bg-bg p-4 rounded-lg border border-border">
+        <!-- ⑥ 답안 영역 — 유형별 토글 -->
+
+        <!-- 객관식 보기 영역 -->
+        <div id="options-area" class="space-y-3 bg-bg p-4 rounded-xl border border-border">
           <div class="flex justify-between items-center mb-2">
-            <p class="text-sm font-medium text-text">보기 설정 (객관식 전용)</p>
+            <p class="text-sm font-semibold text-text">
+              🔢 보기 설정
+              <span class="text-xs text-muted font-normal ml-1">(객관식 전용 — 라디오 버튼으로 정답 선택)</span>
+            </p>
             <button type="button" onclick="addOption()"
-              class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 추가</button>
+              class="text-xs bg-accent text-white px-2.5 py-1 rounded shadow-sm">+ 보기 추가</button>
           </div>
-          <div id="options-container" class="space-y-2">
-            <!-- JS에서 동적으로 보기 항목과 정답(Radio) 라디오 버튼 생성 -->
-          </div>
+          <div id="options-container" class="space-y-2"></div>
         </div>
 
-        <!-- 역동적인 찾아넣기 영역 (FIND_AND_FILL 일 때만 표시) -->
-        <div id="blanks-area" class="space-y-3 bg-bg p-4 rounded-lg border border-border" style="display: none;">
+        <!-- 빈칸채우기 정답 영역 -->
+        <div id="blanks-area" class="space-y-3 bg-bg p-4 rounded-xl border border-border" style="display:none;">
           <div class="flex justify-between items-center mb-2">
-            <p class="text-sm font-medium text-text">빈칸(구역) 정답 설정 (순서대로)</p>
+            <p class="text-sm font-semibold text-text">
+              🔲 빈칸 정답 설정
+              <span class="text-xs text-muted font-normal ml-1">(①②③ 순서대로 입력)</span>
+            </p>
             <button type="button" onclick="addBlank()"
-              class="text-xs bg-accent text-white px-2 py-1 rounded shadow-sm">+ 구역 추가</button>
+              class="text-xs bg-accent text-white px-2.5 py-1 rounded shadow-sm">+ 빈칸 추가</button>
           </div>
-          <div id="blanks-container" class="space-y-2">
-            <!-- JS에서 동적으로 구역별 정답 Input 생성 -->
-          </div>
+          <div id="blanks-container" class="space-y-2"></div>
         </div>
 
-        <!-- 단답형 정답 (SHORT_ANSWER 일 때만 표시) -->
-        <div id="short-answer-area" style="display: none;">
-          <label for="short_answer" class="block text-sm font-medium text-text mb-1">정답 <span
-              class="text-red-500">*</span></label>
+        <!-- 단답/서술형 정답 영역 -->
+        <div id="short-answer-area" style="display:none;">
+          <label for="short_answer" class="block text-sm font-medium text-text mb-1">
+            ✏️ 정답 <span class="text-red-500">*</span>
+            <span class="text-xs text-muted font-normal ml-1">(여러 허용 답안은 콤마로 구분)</span>
+          </label>
           <textarea id="short_answer" name="short_answer" rows="3"
-            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y"
-            placeholder="다중행 정답을 입력할 수 있습니다. 다중 허용 정답일 경우 콤마(,)로 구분해 입력하세요."></textarea>
+            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y font-mono text-sm"
+            placeholder="예: 캡슐화  또는  캡슐화, Encapsulation"></textarea>
         </div>
 
-        <!-- 힌트 및 해설 -->
+        <!-- ⑦ 힌트 및 해설 -->
         <div>
           <div class="flex justify-between items-end mb-1">
-            <label for="hint_explanation" class="block text-sm font-medium text-text">힌트 및 해설 (Markdown 지원) <span
-                class="text-red-500">*</span></label>
+            <label for="hint_explanation" class="block text-sm font-medium text-text">힌트 및 해설 (Markdown 지원)</label>
             <button type="button" onclick="openMarkdownPreview('hint_explanation')"
-              class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center">
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                </path>
+              class="text-[10px] bg-bg text-accent border border-accent/30 px-2 py-0.5 rounded hover:bg-accent hover:text-white transition-all flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
               </svg>
               미리보기
             </button>
           </div>
-          <textarea id="hint_explanation" name="hint_explanation" rows="3" required
+          <textarea id="hint_explanation" name="hint_explanation" rows="3"
             class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-shadow resize-y"
             placeholder="문제에 대한 힌트 및 해설을 입력하세요"></textarea>
         </div>
 
-        <!-- 폼 전송 액션 -->
+        <!-- ⑧ 제출 버튼 -->
         <div class="pt-4 flex justify-end">
           <button type="submit" id="submit-btn"
             class="bg-accent text-white font-bold py-2.5 px-6 rounded-lg shadow-sm focus:outline-none disabled:opacity-50">
             문제 저장
           </button>
         </div>
+
       </form>
     </div>
   </div>
@@ -153,75 +177,316 @@
 <script>
   /**
    * 문제 작성 페이지 전용 로직
+   *
+   * 정답 저장 형식 (Page_Solve 및 DB와 통일):
+   *   MULTIPLE_CHOICE  → { text: "정답보기텍스트" }
+   *   SHORT_ANSWER     → { text: "정답" }
+   *   FIND_AND_FILL    → { "1": "ans1", "2": "ans2", ... }  (1-based 숫자 키)
+   *
+   * 내용 조합:
+   *   지문 블록  → 일반 텍스트
+   *   코드 블록  → '''\n코드\n'''
+   *   쿼리 블록  → '''\nSQL\n'''
+   *   블록 사이  → 빈 줄 구분 (\n\n)
+   *   (''' 는 렌더링 시 ``` 으로 변환되어 마크다운 코드펜스로 표시됨)
    */
 
-  // 객관식 보기 개수 카운터
-  let optionCount = 0;
+  var optionCount = 0;
+  var writeSubjectData = {}; // { "대과목": ["소과목1", ...] }
 
+  /* ─── 과목 드롭다운 ─────────────────────────────────────── */
+  function loadWriteSubjects() {
+    var majorSel = document.getElementById('major_subject_sel');
+    if (!majorSel) return;
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        majorSel.innerHTML = '<option value="">-- 선택 --</option>';
+        if (res && res.status === 'success' && res.data && Object.keys(res.data).length > 0) {
+          writeSubjectData = res.data;
+          Object.keys(writeSubjectData).sort().forEach(function(major) {
+            var opt = document.createElement('option');
+            opt.value = opt.textContent = major;
+            majorSel.appendChild(opt);
+          });
+        }
+        var customOpt = document.createElement('option');
+        customOpt.value = '__custom__';
+        customOpt.textContent = '✏️ 직접 입력...';
+        majorSel.appendChild(customOpt);
+      })
+      .withFailureHandler(function() {
+        _showDirectInput('major');
+        _showDirectInput('minor');
+      })
+      .getSubjects();
+  }
+
+  function onMajorChange() {
+    var majorSel   = document.getElementById('major_subject_sel');
+    var majorInput = document.getElementById('major_subject');
+    var minorSel   = document.getElementById('minor_subject_sel');
+    var minorInput = document.getElementById('minor_subject');
+    if (!majorSel) return;
+
+    var val = majorSel.value;
+    if (val === '__custom__') {
+      _showDirectInput('major');
+      _showDirectInput('minor');
+      return;
+    }
+
+    majorInput.value = val;
+    majorInput.classList.add('hidden');
+
+    var minors = writeSubjectData[val] || [];
+    minorSel.innerHTML = '<option value="">-- 선택 --</option>';
+    minors.forEach(function(m) {
+      var opt = document.createElement('option');
+      opt.value = opt.textContent = m;
+      minorSel.appendChild(opt);
+    });
+    var customOpt = document.createElement('option');
+    customOpt.value = '__custom__';
+    customOpt.textContent = '✏️ 직접 입력...';
+    minorSel.appendChild(customOpt);
+
+    minorSel.classList.remove('hidden');
+    minorInput.classList.add('hidden');
+    minorInput.value = '';
+  }
+
+  function onMinorChange() {
+    var minorSel   = document.getElementById('minor_subject_sel');
+    var minorInput = document.getElementById('minor_subject');
+    if (!minorSel) return;
+    var val = minorSel.value;
+    if (val === '__custom__') {
+      _showDirectInput('minor');
+    } else {
+      minorInput.value = val;
+      minorInput.classList.add('hidden');
+    }
+  }
+
+  function _showDirectInput(type) {
+    var sel   = document.getElementById(type + '_subject_sel');
+    var input = document.getElementById(type + '_subject');
+    if (sel)   sel.classList.add('hidden');
+    if (input) input.classList.remove('hidden');
+  }
+
+  /* ─── 내용 블록 (코드/쿼리 추가) ───────────────────────── */
+  function addContentBlock(type) {
+    var container = document.getElementById('content-blocks');
+    if (!container) return;
+
+    var configs = {
+      code:  { label: '💻 코드',      wrapClass: 'border-indigo-200',   headClass: 'bg-indigo-50 border-indigo-200 text-indigo-700',  ph: '코드를 입력하세요' },
+      query: { label: '🗃️ 쿼리(SQL)', wrapClass: 'border-emerald-200', headClass: 'bg-emerald-50 border-emerald-200 text-emerald-700', ph: 'SQL 쿼리를 입력하세요' }
+    };
+    var c = configs[type] || configs.code;
+
+    var div = document.createElement('div');
+    div.className = 'content-block border rounded-xl overflow-hidden ' + c.wrapClass;
+    div.dataset.type = type;
+    div.innerHTML =
+      '<div class="flex items-center justify-between px-3 py-2 border-b ' + c.headClass + '">' +
+        '<span class="text-[11px] font-bold uppercase tracking-wider">' + c.label + '</span>' +
+        '<button type="button" onclick="this.closest(\'.content-block\').remove()" ' +
+          'class="text-red-400 hover:text-red-600 text-xs font-semibold transition-colors">✕ 삭제</button>' +
+      '</div>' +
+      '<textarea name="content_block" data-type="' + type + '" rows="6" ' +
+        'class="w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-inset transition-shadow resize-y font-mono text-sm bg-gray-50" ' +
+        'placeholder="' + c.ph + '"></textarea>';
+    container.appendChild(div);
+  }
+
+  /* ─── 유형별 답안 토글 ──────────────────────────────────── */
+  function toggleOptionsArea() {
+    var typeSelect  = document.getElementById('question_type');
+    var optionsArea = document.getElementById('options-area');
+    var blanksArea  = document.getElementById('blanks-area');
+    var shortArea   = document.getElementById('short-answer-area');
+    if (!typeSelect) return;
+
+    var type = typeSelect.value;
+    optionsArea.style.display = (type === 'MULTIPLE_CHOICE') ? 'block' : 'none';
+    blanksArea.style.display  = (type === 'FIND_AND_FILL')   ? 'block' : 'none';
+    shortArea.style.display   = (type === 'SHORT_ANSWER')    ? 'block' : 'none';
+
+    optionsArea.querySelectorAll('input').forEach(function(i) { i.disabled = (type !== 'MULTIPLE_CHOICE'); });
+    blanksArea.querySelectorAll('input').forEach(function(i)  { i.disabled = (type !== 'FIND_AND_FILL'); });
+    var shortTA = shortArea.querySelector('textarea');
+    if (shortTA) {
+      shortTA.disabled = (type !== 'SHORT_ANSWER');
+      shortTA.required = (type === 'SHORT_ANSWER');
+    }
+  }
+
+  function addOption() {
+    var container = document.getElementById('options-container');
+    if (!container) return;
+    var type = (document.getElementById('question_type') || {}).value;
+    var isDisabled = (type !== 'MULTIPLE_CHOICE');
+    var index = optionCount++;
+    var div = document.createElement('div');
+    div.className = 'flex items-center space-x-3';
+    div.innerHTML =
+      '<input type="radio" name="mc_answer" value="' + index + '" ' +
+        'class="w-4 h-4 text-accent flex-shrink-0 cursor-pointer" required ' + (isDisabled ? 'disabled' : '') + '>' +
+      '<input type="text" name="options" required ' +
+        'class="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" ' +
+        'placeholder="보기 ' + (index + 1) + '" ' + (isDisabled ? 'disabled' : '') + '>' +
+      '<button type="button" onclick="this.parentElement.remove()" ' +
+        'class="text-red-400 hover:text-red-600 p-1 transition-colors">' +
+        '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" ' +
+            'd="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">' +
+          '</path></svg>' +
+      '</button>';
+    container.appendChild(div);
+  }
+
+  function addBlank() {
+    var container = document.getElementById('blanks-container');
+    if (!container) return;
+    var type = (document.getElementById('question_type') || {}).value;
+    var isDisabled = (type !== 'FIND_AND_FILL');
+    var circleNums = '①②③④⑤⑥⑦⑧⑨⑩';
+    var num = container.children.length + 1;
+    var div = document.createElement('div');
+    div.className = 'flex items-center space-x-3';
+    div.innerHTML =
+      '<span class="blank-num text-sm font-bold text-accent bg-accent/10 w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0">' +
+        (circleNums[num - 1] || num) +
+      '</span>' +
+      '<input type="text" name="blanks" required ' +
+        'class="flex-1 px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" ' +
+        'placeholder="빈칸 ' + num + ' 의 정답" ' + (isDisabled ? 'disabled' : '') + '>' +
+      '<button type="button" onclick="this.parentElement.remove(); updateBlankNumbers();" ' +
+        'class="text-red-400 hover:text-red-600 p-1 transition-colors">' +
+        '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" ' +
+            'd="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">' +
+          '</path></svg>' +
+      '</button>';
+    container.appendChild(div);
+  }
+
+  function updateBlankNumbers() {
+    var container = document.getElementById('blanks-container');
+    if (!container) return;
+    var circleNums = '①②③④⑤⑥⑦⑧⑨⑩';
+    Array.from(container.children).forEach(function(child, idx) {
+      var span = child.querySelector('.blank-num');
+      if (span) span.textContent = circleNums[idx] || (idx + 1);
+    });
+  }
+
+  /* ─── 폼 제출 ────────────────────────────────────────────── */
   async function submitQuestion(event) {
     event.preventDefault();
-
-    const form = event.target;
-    const submitBtn = document.getElementById('submit-btn');
-
-    // 버튼 비활성화 (로딩 상태)
-    const originalBtnText = submitBtn.innerText;
+    var form = event.target;
+    var submitBtn = document.getElementById('submit-btn');
+    var originalBtnText = submitBtn.innerText;
     submitBtn.disabled = true;
     submitBtn.innerText = '저장 중...';
 
     try {
-      // 폼 데이터 수집
-      const formData = new FormData(form);
+      var formData = new FormData(form);
 
-      const questionType = formData.get('question_type');
-      let optionsList = null;
-      let finalAnswer = null;
+      // 과목 수집 (드롭다운 우선, 없으면 직접입력)
+      var majorSel   = document.getElementById('major_subject_sel');
+      var minorSel   = document.getElementById('minor_subject_sel');
+      var majorInput = document.getElementById('major_subject');
+      var minorInput = document.getElementById('minor_subject');
 
-      if (questionType === 'MULTIPLE_CHOICE') {
-        const optionInputs = form.querySelectorAll('input[name="options"]');
-        const mcAnswerRadio = form.querySelector('input[name="mc_answer"]:checked');
-
-        if (optionInputs.length === 0) throw new Error('객관식 보기를 추가해주세요.');
-        if (!mcAnswerRadio) throw new Error('객관식 보기 중 정답을 선택해주세요.');
-
-        optionsList = Array.from(optionInputs).map(el => el.value.trim());
-        const selectedIndex = parseInt(mcAnswerRadio.value, 10);
-        finalAnswer = [optionsList[selectedIndex]];
-
-      } else if (questionType === 'FIND_AND_FILL') {
-        const blankInputs = form.querySelectorAll('input[name="blanks"]');
-        if (blankInputs.length === 0) throw new Error('빈칸(구역) 정답을 추가해주세요.');
-        finalAnswer = Array.from(blankInputs).map(el => el.value.trim());
-
-      } else if (questionType === 'SHORT_ANSWER') {
-        const shortAnswerRaw = formData.get('short_answer') || '';
-        if (!shortAnswerRaw.trim()) throw new Error('단답형 정답을 입력해주세요.');
-        // v90/v91: 콤마(,)로 분리하지 않고 전체 텍스트를 하나의 정답으로 처리하도록 변경 (줄바꿈 및 콤마 포함 정답 지원)
-        finalAnswer = [shortAnswerRaw.trim()];
+      var majorVal = '';
+      if (majorSel && !majorSel.classList.contains('hidden') && majorSel.value && majorSel.value !== '__custom__') {
+        majorVal = majorSel.value;
+      } else {
+        majorVal = majorInput ? majorInput.value.trim() : '';
       }
 
-      const cleanContent = formData.get('content').replace(/!\[.*?\]\(.*?\)/g, "").trim();
+      var minorVal = '';
+      if (minorSel && !minorSel.classList.contains('hidden') && minorSel.value && minorSel.value !== '__custom__') {
+        minorVal = minorSel.value;
+      } else {
+        minorVal = minorInput ? minorInput.value.trim() : '';
+      }
 
-      const data = {
-        major_subject: formData.get('major_subject'),
-        minor_subject: formData.get('minor_subject'),
-        question_title: formData.get('question_title'),
-        question_type: questionType,
-        content: cleanContent,
-        image_position: formData.get('image_position') || 'BOTTOM',
-        options: optionsList,
-        answer: finalAnswer,
-        hint_explanation: formData.get('hint_explanation')
+      if (!majorVal || !minorVal) throw new Error('대과목과 소과목을 모두 입력해주세요.');
+
+      // 내용 블록 조합 (지문 + 코드/쿼리 → ''' 코드펜스)
+      var blocks = Array.from(form.querySelectorAll('#content-blocks .content-block'));
+      var parts = [];
+      blocks.forEach(function(block) {
+        var blockType = block.dataset.type;
+        var ta = block.querySelector('textarea');
+        var val = ta ? ta.value.trim() : '';
+        if (!val) return;
+        if (blockType === 'text') {
+          parts.push(val);
+        } else {
+          // 코드/쿼리 → ''' 로 감싸기 (렌더링 시 ``` 변환)
+          parts.push("'''\n" + val + "\n'''");
+        }
+      });
+      var content = parts.join('\n\n');
+      if (!content) throw new Error('문제 내용(지문)을 입력해주세요.');
+
+      // 유형별 정답 수집
+      var questionType = formData.get('question_type');
+      var optionsList = null;
+      var finalAnswer = null;
+
+      if (questionType === 'MULTIPLE_CHOICE') {
+        var optionInputs = form.querySelectorAll('input[name="options"]');
+        var mcAnswerRadio = form.querySelector('input[name="mc_answer"]:checked');
+        if (optionInputs.length === 0) throw new Error('객관식 보기를 추가해주세요.');
+        if (!mcAnswerRadio) throw new Error('보기 중 정답을 라디오 버튼으로 선택해주세요.');
+        optionsList = Array.from(optionInputs).map(function(el) { return el.value.trim(); });
+        var selectedIndex = parseInt(mcAnswerRadio.value, 10);
+        // { text: "정답 보기 텍스트" }
+        finalAnswer = { text: optionsList[selectedIndex] };
+
+      } else if (questionType === 'FIND_AND_FILL') {
+        var blankInputs = form.querySelectorAll('input[name="blanks"]');
+        if (blankInputs.length === 0) throw new Error('빈칸 정답을 추가해주세요.');
+        // { "1": "ans1", "2": "ans2" } — 1-based 숫자 키
+        finalAnswer = {};
+        Array.from(blankInputs).forEach(function(el, i) {
+          finalAnswer[String(i + 1)] = el.value.trim();
+        });
+
+      } else if (questionType === 'SHORT_ANSWER') {
+        var raw = formData.get('short_answer') || '';
+        if (!raw.trim()) throw new Error('단답형 정답을 입력해주세요.');
+        // { text: "정답" }
+        finalAnswer = { text: raw.trim() };
+      }
+
+      var data = {
+        major_subject:    majorVal,
+        minor_subject:    minorVal,
+        question_title:   formData.get('question_title'),
+        question_type:    questionType,
+        content:          content,
+        image_position:   formData.get('image_position') || 'BOTTOM',
+        options:          optionsList,
+        answer:           finalAnswer,
+        hint_explanation: formData.get('hint_explanation') || null
       };
 
-      const imageFile = formData.get('imageFile');
+      var imageFile = formData.get('imageFile');
       if (imageFile && imageFile.size > 0) {
-        data.base64_image = await toBase64(imageFile);
+        data.base64_image   = await toBase64(imageFile);
         data.image_filename = imageFile.name;
       }
 
       google.script.run
-        .withSuccessHandler((response) => {
+        .withSuccessHandler(function(response) {
           submitBtn.disabled = false;
           submitBtn.innerText = originalBtnText;
           if (response && response.status === 'success') {
@@ -231,7 +496,7 @@
             alert('저장 실패: ' + (response ? response.message : '알 수 없는 오류'));
           }
         })
-        .withFailureHandler((error) => {
+        .withFailureHandler(function(error) {
           submitBtn.disabled = false;
           submitBtn.innerText = originalBtnText;
           console.error(error);
@@ -242,92 +507,43 @@
     } catch (error) {
       submitBtn.disabled = false;
       submitBtn.innerText = originalBtnText;
-      console.error(error);
-      alert('오류가 발생했습니다: ' + error.message);
+      alert('오류: ' + error.message);
     }
   }
 
-  function toggleOptionsArea() {
-    const typeSelect = document.getElementById('question_type');
-    const optionsArea = document.getElementById('options-area');
-    const blanksArea = document.getElementById('blanks-area');
-    const shortAnswerArea = document.getElementById('short-answer-area');
-
-    if (typeSelect && optionsArea && blanksArea && shortAnswerArea) {
-      const type = typeSelect.value;
-      optionsArea.style.display = type === 'MULTIPLE_CHOICE' ? 'block' : 'none';
-      blanksArea.style.display = type === 'FIND_AND_FILL' ? 'block' : 'none';
-      shortAnswerArea.style.display = type === 'SHORT_ANSWER' ? 'block' : 'none';
-
-      const mcInputs = optionsArea.querySelectorAll('input');
-      mcInputs.forEach(input => input.disabled = (type !== 'MULTIPLE_CHOICE'));
-      const blankInputs = blanksArea.querySelectorAll('input');
-      blankInputs.forEach(input => input.disabled = (type !== 'FIND_AND_FILL'));
-      const shortAnswerInput = shortAnswerArea.querySelector('textarea') || shortAnswerArea.querySelector('input');
-      if (shortAnswerInput) {
-        shortAnswerInput.disabled = (type !== 'SHORT_ANSWER');
-        shortAnswerInput.required = (type === 'SHORT_ANSWER');
-      }
-    }
-  }
-
+  /* ─── 폼 초기화 ─────────────────────────────────────────── */
   function resetQuestionForm() {
-    const form = document.getElementById('question-form');
+    var form = document.getElementById('question-form');
     if (!form) return;
     form.reset();
-    const optionsContainer = document.getElementById('options-container');
-    const blanksContainer = document.getElementById('blanks-container');
+
+    // 코드/쿼리 블록만 제거, 지문 블록 유지
+    var container = document.getElementById('content-blocks');
+    if (container) {
+      Array.from(container.querySelectorAll('.content-block[data-type="code"], .content-block[data-type="query"]'))
+        .forEach(function(el) { el.remove(); });
+      var firstTA = container.querySelector('textarea');
+      if (firstTA) firstTA.value = '';
+    }
+
+    var optionsContainer = document.getElementById('options-container');
+    var blanksContainer  = document.getElementById('blanks-container');
     if (optionsContainer) optionsContainer.innerHTML = '';
-    if (blanksContainer) blanksContainer.innerHTML = '';
+    if (blanksContainer)  blanksContainer.innerHTML  = '';
     optionCount = 0;
     toggleOptionsArea();
-    const typeSelect = document.getElementById('question_type');
+
+    // 객관식 기본 보기 4개
+    var typeSelect = document.getElementById('question_type');
     if (typeSelect && typeSelect.value === 'MULTIPLE_CHOICE') {
-      for (let i = 0; i < 4; i++) addOption();
+      for (var i = 0; i < 4; i++) addOption();
     }
   }
 
-  function addOption() {
-    const container = document.getElementById('options-container');
-    if (!container) return;
-    const typeSelect = document.getElementById('question_type');
-    const isDisabled = typeSelect ? typeSelect.value !== 'MULTIPLE_CHOICE' : false;
-    const index = optionCount++;
-    const div = document.createElement('div');
-    div.className = "flex items-center space-x-3";
-    div.innerHTML = `
-      <input type="radio" name="mc_answer" value="${index}" class="w-4 h-4 text-accent border-gray-300 focus:ring-accent flex-shrink-0 cursor-pointer" required ${isDisabled ? 'disabled' : ''}>
-      <input type="text" name="options" required class="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" placeholder="보기 내용 입력" ${isDisabled ? 'disabled' : ''}>
-      <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 focus:outline-none p-1 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-      </button>
-    `;
-    container.appendChild(div);
-  }
-
-  function addBlank() {
-    const container = document.getElementById('blanks-container');
-    if (!container) return;
-    const typeSelect = document.getElementById('question_type');
-    const isDisabled = typeSelect ? typeSelect.value !== 'FIND_AND_FILL' : false;
-    const div = document.createElement('div');
-    div.className = "flex items-center space-x-3";
-    div.innerHTML = `
-      <span class="text-sm font-semibold text-muted bg-muted/20 px-2 py-1 rounded w-8 text-center flex-shrink-0">${container.children.length + 1}</span>
-      <input type="text" name="blanks" required class="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" placeholder="정답 값 입력" ${isDisabled ? 'disabled' : ''}>
-      <button type="button" onclick="this.parentElement.remove(); updateBlankNumbers();" class="text-red-400 hover:text-red-600 focus:outline-none p-1 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-      </button>
-    `;
-    container.appendChild(div);
-  }
-
-  function updateBlankNumbers() {
-    const container = document.getElementById('blanks-container');
-    if (!container) return;
-    Array.from(container.children).forEach((child, idx) => {
-      const span = child.querySelector('span');
-      if (span) span.innerText = (idx + 1);
-    });
+  /* ─── navigate('write') 에서 호출되는 초기화 함수 ─────────── */
+  function initWritePage() {
+    toggleOptionsArea();
+    for (var i = 0; i < 4; i++) addOption();
+    loadWriteSubjects();
   }
 </script>

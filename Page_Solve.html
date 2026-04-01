@@ -212,13 +212,46 @@
     font-size: .92rem;
     line-height: 1.75;
     color: var(--gray-700);
-    white-space: pre-wrap;
     background: var(--gray-50);
     border-radius: 8px;
     padding: 14px;
     margin-bottom: 20px;
-    font-family: 'Pretendard', monospace;
   }
+  /* 코드블록 없을 때(plain text) */
+  .question-content.plain-text { white-space: pre-wrap; font-family: 'Pretendard', sans-serif; }
+  /* 마크다운 렌더링 시 */
+  .question-content pre {
+    background: #1e1e1e; color: #d4d4d4;
+    border-radius: 6px; padding: 12px 14px;
+    overflow-x: auto; font-size: .85rem;
+    line-height: 1.6; margin: 10px 0;
+  }
+  .question-content pre code { background: none; padding: 0; font-size: inherit; }
+  .question-content code {
+    background: #e8e8e8; color: #c7254e;
+    padding: 1px 5px; border-radius: 3px;
+    font-size: .88em; font-family: 'Consolas', 'Menlo', monospace;
+  }
+  .question-content p { margin: 6px 0; }
+
+  /* 객관식 보기 버튼 */
+  .options-list { display: flex; flex-direction: column; gap: 8px; }
+  .option-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border: 2px solid var(--gray-200);
+    border-radius: 8px; background: #fff; cursor: pointer;
+    font-size: .93rem; text-align: left; width: 100%;
+    transition: border-color .15s, background .15s;
+  }
+  .option-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .option-btn.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 600; }
+  .option-btn .opt-num {
+    min-width: 26px; height: 26px; border-radius: 50%;
+    background: var(--gray-200); color: var(--gray-700);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 700; flex-shrink: 0;
+  }
+  .option-btn.selected .opt-num { background: var(--primary); color: #fff; }
 
   /* 답안 입력 */
   .answer-section { margin-bottom: 16px; }
@@ -634,7 +667,7 @@ function renderQuestion() {
   document.getElementById('questionTitle').textContent =
     q.question_title.replace(/^\d+\.\s*/, '');
 
-  // 내용 (너무 길면 앞부분만, 제목과 중복되면 숨김)
+  // 내용 (제목과 첫 줄 중복 제거)
   const content = q.content || '';
   const firstLine = content.split('\n')[0].trim();
   const titleText = q.question_title.replace(/^\d+\.\s*/, '').trim();
@@ -644,7 +677,20 @@ function renderQuestion() {
 
   const contentEl = document.getElementById('questionContent');
   if (restContent) {
-    contentEl.textContent = restContent;
+    // ''' → ``` 변환 후 marked 로 렌더링 (코드블록 지원)
+    if (typeof marked !== 'undefined') {
+      try {
+        const converted = restContent.replace(/'''/g, '```');
+        contentEl.innerHTML = marked.parse(converted);
+        contentEl.className = 'question-content';
+      } catch(e) {
+        contentEl.textContent = restContent;
+        contentEl.className = 'question-content plain-text';
+      }
+    } else {
+      contentEl.textContent = restContent;
+      contentEl.className = 'question-content plain-text';
+    }
     contentEl.style.display = '';
   } else {
     contentEl.style.display = 'none';
@@ -669,8 +715,19 @@ function renderAnswerInput(q) {
   const ans = q.answer || {};
   const keys = Object.keys(ans).filter(k => k !== 'text');
 
-  if (q.question_type === 'FIND_AND_FILL' && keys.length > 0) {
-    // ①②③ 빈칸 입력
+  if (q.question_type === 'MULTIPLE_CHOICE' && q.options && q.options.length > 0) {
+    // 객관식 — 보기 버튼 목록
+    const nums = ['①','②','③','④','⑤','⑥'];
+    container.innerHTML = '<div class="options-list">' +
+      q.options.map((opt, i) =>
+        `<button type="button" class="option-btn" data-index="${i}" onclick="selectOption(this)">
+          <span class="opt-num">${nums[i] || (i+1)}</span>
+          <span>${opt}</span>
+        </button>`
+      ).join('') + '</div>';
+
+  } else if (q.question_type === 'FIND_AND_FILL' && keys.length > 0) {
+    // 빈칸채우기 — ①②③ 입력
     const circleNums = '①②③④⑤⑥⑦⑧⑨⑩';
     container.innerHTML = '<div class="fill-grid">' +
       keys.map((k, i) => {
@@ -680,12 +737,21 @@ function renderAnswerInput(q) {
           <input type="text" id="fill_${k}" placeholder="답 입력..." autocomplete="off">
         </div>`;
       }).join('') + '</div>';
+
   } else {
+    // 단답/서술형
     container.innerHTML = `
       <textarea class="answer-textarea" id="mainAnswer"
-        placeholder="정답을 입력하세요. 여러 답변은 쉼표로 구분하세요."></textarea>
+        placeholder="정답을 입력하세요."></textarea>
     `;
   }
+}
+
+function selectOption(btn) {
+  const list = btn.closest('.options-list');
+  if (!list) return;
+  list.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 
 function typeLabel(t) {
@@ -722,6 +788,16 @@ function submitAnswer() {
 
 function getUserAnswer(q) {
   const ans = q.answer || {};
+
+  // 객관식 — 선택된 보기 텍스트 반환
+  if (q.question_type === 'MULTIPLE_CHOICE') {
+    const selected = document.querySelector('.option-btn.selected');
+    if (!selected) return '';
+    const idx = parseInt(selected.dataset.index, 10);
+    return (q.options && q.options[idx]) ? q.options[idx] : '';
+  }
+
+  // 빈칸채우기 — 키별 입력값 객체
   const keys = Object.keys(ans).filter(k => k !== 'text');
   if (q.question_type === 'FIND_AND_FILL' && keys.length > 0) {
     const result = {};
@@ -731,6 +807,8 @@ function getUserAnswer(q) {
     });
     return result;
   }
+
+  // 단답/서술형
   const el = document.getElementById('mainAnswer');
   return el ? el.value.trim() : '';
 }
@@ -739,17 +817,27 @@ function checkAnswer(userAns, correctAns) {
   if (!correctAns) return false;
   const norm = s => String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
 
+  // 레거시: 배열 형식 (구버전 Page_Write 저장 데이터)
+  if (Array.isArray(correctAns)) {
+    const u = norm(userAns);
+    return correctAns.some(a => norm(a) === u);
+  }
+
+  // { text: "..." } — 객관식·단답형
   if (correctAns.text) {
     const u = norm(userAns);
     const c = norm(correctAns.text);
     return u === c || c.includes(u) || u.includes(c.split(' ')[0]);
   }
-  if (typeof userAns === 'object') {
+
+  // { "1": "...", "2": "..." } — 빈칸채우기
+  if (typeof userAns === 'object' && userAns !== null && !Array.isArray(userAns)) {
     const keys = Object.keys(correctAns);
     if (!keys.length) return false;
     const matched = keys.filter(k => norm(userAns[k]||'') === norm(correctAns[k]||''));
     return matched.length === keys.length;
   }
+
   return false;
 }
 
@@ -763,11 +851,15 @@ function showResultBox(isCorrect, correctAns) {
 
 function formatAnswer(ans) {
   if (!ans) return '-';
+  // 레거시 배열 형식
+  if (Array.isArray(ans)) return ans.join(', ');
+  // { text: "..." }
   if (ans.text) return ans.text;
+  // { "1": "...", "2": "..." }
   const keys = Object.keys(ans).sort();
   const circleNums = '①②③④⑤⑥⑦⑧⑨⑩';
   return keys.map(k => {
-    const label = isNaN(k) ? k : (circleNums[parseInt(k)-1] || '');
+    const label = isNaN(k) ? k : (circleNums[parseInt(k)-1] || k);
     return `${label} ${ans[k]}`;
   }).join('\n');
 }

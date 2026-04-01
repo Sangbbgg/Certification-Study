@@ -42,7 +42,9 @@
       if (pageId === 'analyze') {
         if (typeof loadManageList === 'function') loadManageList();
       } else if (pageId === 'write') {
-        if (typeof resetQuestionForm === 'function') resetQuestionForm();
+        // initWritePage: 드롭다운 로드 + 기본 보기 생성
+        if (typeof initWritePage === 'function') initWritePage();
+        else if (typeof resetQuestionForm === 'function') resetQuestionForm();
       } else if (pageId === 'solve') {
         if (typeof initSolvePage === 'function') initSolvePage();
       }
