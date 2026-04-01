@@ -540,10 +540,13 @@
     }
   }
 
-  /* ─── navigate('write') 에서 호출되는 초기화 함수 ─────────── */
+  /* ─── 페이지 초기화 (navigate('write') 또는 자동 실행) ────── */
   function initWritePage() {
     toggleOptionsArea();
     for (var i = 0; i < 4; i++) addOption();
     loadWriteSubjects();
   }
+
+  // 자동 초기화 (template inject 후 script 실행 시 즉시 호출)
+  initWritePage();
 </script>
